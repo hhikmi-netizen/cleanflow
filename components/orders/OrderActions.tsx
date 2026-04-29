@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Loader2, FileText } from 'lucide-react'
+import { Loader2, FileText, Receipt } from 'lucide-react'
 import { OrderStatus } from '@/lib/types'
+import Link from 'next/link'
 
 interface OrderActionsProps {
   orderId: string
@@ -82,6 +83,13 @@ export default function OrderActions({ orderId, currentStatus, paid }: OrderActi
       >
         {paidLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : paid ? '✓ Payé' : 'Marquer payé'}
       </Button>
+
+      <Link href={`/orders/${orderId}/invoice`}>
+        <Button variant="outline" className="h-11">
+          <Receipt size={16} className="mr-2" />
+          Bon
+        </Button>
+      </Link>
 
       <Button variant="outline" onClick={printReceipt} className="h-11">
         <FileText size={16} className="mr-2" />

@@ -128,3 +128,14 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  body {
+    background: white !important;
+  }
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+}
