@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -12,14 +12,10 @@ export async function proxy(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key',
     {
       cookies: {
-        getAll() {
-          return req.cookies.getAll()
-        },
+        getAll() { return req.cookies.getAll() },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value))
-          cookiesToSet.forEach(({ name, value, options }) =>
-            res.cookies.set(name, value, options)
-          )
+          cookiesToSet.forEach(({ name, value, options }) => res.cookies.set(name, value, options))
         },
       },
     }
@@ -42,4 +38,3 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.svg).*)'],
 }
-

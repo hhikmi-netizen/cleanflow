@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Loader2, Check, ChevronRight } from 'lucide-react'
+import { getPressingStatus, setupPressing, addServices, addClient } from '@/app/actions/onboarding'
 
 const DEFAULT_SERVICES = [
   { name: 'Chemise', category: 'Vêtements', price_individual: 15, price_business: 12, unit: 'pièce', active: true },
@@ -23,7 +23,7 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [initializing, setInitializing] = useState(true)
   const [pressingId, setPressingId] = useState<string | null>(null)
-  const [needsSetup, setNeedsSetup] = useState(false) // true = pas encore de pressing
+  const [needsSetup, setNeedsSetup] = useState(false)
 
   // Step 1 fields
   const [pressingName, setPressingName] = useState('')
@@ -40,100 +40,44 @@ export default function OnboardingPage() {
   const [clientPhone, setClientPhone] = useState('')
 
   const router = useRouter()
-  const supabase = createClient()
 
-  // Initialisation : vérifie si le pressing existe déjà
   useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('pressing_id')
-        .eq('id', user.id)
-        .single()
-
-      if (userData?.pressing_id) {
-        // Pressing existant : charger les données pour pré-remplir
-        setPressingId(userData.pressing_id)
-        setNeedsSetup(false)
-        const { data: pressing } = await supabase
-          .from('pressings')
-          .select('name, phone, address, ice, tax_rate')
-          .eq('id', userData.pressing_id)
-          .single()
-        if (pressing) {
-          setPressingName(pressing.name || '')
-          setPhone(pressing.phone || '')
-          setAddress(pressing.address || '')
-          setIce(pressing.ice || '')
-          setTaxRate(String(pressing.tax_rate ?? '0'))
+    getPressingStatus()
+      .then(({ pressingId: pid, pressingData, userName }) => {
+        if (pid) {
+          setPressingId(pid)
+          setNeedsSetup(false)
+          if (pressingData) {
+            setPressingName(pressingData.name || '')
+            setPhone(pressingData.phone || '')
+            setAddress(pressingData.address || '')
+            setIce(pressingData.ice || '')
+            setTaxRate(String(pressingData.tax_rate ?? '0'))
+          }
+        } else {
+          setNeedsSetup(true)
+          if (userName) setPressingName(userName)
         }
-      } else {
-        // Pas de pressing : on va le créer à l'étape 1
-        setNeedsSetup(true)
-        // Pré-remplir depuis les metadata Google si disponible
-        if (user.user_metadata?.full_name) {
-          setPressingName(user.user_metadata.full_name as string)
-        }
-      }
-      setInitializing(false)
-    }
-    init()
+      })
+      .catch(() => router.push('/login'))
+      .finally(() => setInitializing(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStep1 = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      toast.error('Session expirée, veuillez vous reconnecter')
-      router.push('/login')
-      setLoading(false)
-      return
-    }
-
     try {
-      if (needsSetup) {
-        // Créer le pressing
-        const { data: pressing, error: pressingError } = await supabase
-          .from('pressings')
-          .insert({ name: pressingName, phone, email: user.email || '', address: address || null, ice: ice || null, tax_rate: parseFloat(taxRate) || 0 })
-          .select()
-          .single()
-        if (pressingError) throw pressingError
-
-        // Upsert le profil utilisateur (au cas où il existe déjà sans pressing_id)
-        const { error: userError } = await supabase.from('users').upsert({
-          id: user.id,
-          pressing_id: pressing.id,
-          role: 'admin',
-          full_name: (user.user_metadata?.full_name as string) || pressingName,
-          phone,
-        }, { onConflict: 'id' })
-        if (userError) throw userError
-
-        // Créer les settings
-        await supabase.from('settings').insert({ pressing_id: pressing.id })
-
-        setPressingId(pressing.id)
-        setNeedsSetup(false)
-      } else {
-        // Mettre à jour le pressing existant
-        const { error } = await supabase
-          .from('pressings')
-          .update({ address: address || null, ice: ice || null, tax_rate: parseFloat(taxRate) || 0 })
-          .eq('id', pressingId!)
-        if (error) throw error
-      }
-
+      const { pressingId: pid } = await setupPressing({
+        pressingName,
+        phone,
+        address,
+        ice,
+        taxRate: parseFloat(taxRate) || 0,
+      })
+      setPressingId(pid)
       setStep(2)
     } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message || 'Erreur lors de la configuration'
-      toast.error(msg)
-      console.error('[onboarding step1]', err)
+      toast.error((err as Error)?.message || 'Erreur lors de la configuration')
     } finally {
       setLoading(false)
     }
@@ -143,15 +87,12 @@ export default function OnboardingPage() {
     if (skip) { setStep(3); return }
     setLoading(true)
     try {
-      const pid = pressingId
-      if (!pid) throw new Error('Pressing non trouvé')
-      const services = selectedServices.map(i => ({ ...DEFAULT_SERVICES[i], pressing_id: pid }))
-      const { error } = await supabase.from('services').insert(services)
-      if (error) throw error
-      toast.success(`${services.length} services ajoutés !`)
+      if (!pressingId) throw new Error('Pressing non trouvé')
+      await addServices(pressingId, selectedServices)
+      toast.success(`${selectedServices.length} services ajoutés !`)
       setStep(3)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erreur')
+      toast.error((err as Error)?.message || 'Erreur')
     } finally {
       setLoading(false)
     }
@@ -162,16 +103,12 @@ export default function OnboardingPage() {
     if (!clientName || !clientPhone) { toast.error('Nom et téléphone requis'); return }
     setLoading(true)
     try {
-      const pid = pressingId
-      if (!pid) throw new Error('Pressing non trouvé')
-      const { error } = await supabase.from('clients').insert({
-        pressing_id: pid, name: clientName, phone: clientPhone, client_type: 'individual',
-      })
-      if (error && !error.message.includes('unique')) throw error
+      if (!pressingId) throw new Error('Pressing non trouvé')
+      await addClient(pressingId, clientName, clientPhone)
       toast.success('Client ajouté !')
       router.push('/dashboard')
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erreur')
+      toast.error((err as Error)?.message || 'Erreur')
     } finally {
       setLoading(false)
     }

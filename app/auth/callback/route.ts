@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
   if (!code) return NextResponse.redirect(`${origin}/login`)
 
-  // Create response first so we can attach cookies to IT (not to cookieStore)
+  // Build the redirect response first — cookies must be set ON this response
   const response = NextResponse.redirect(`${origin}/dashboard`)
 
   const supabase = createServerClient(
