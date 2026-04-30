@@ -26,41 +26,10 @@ export async function GET(request: NextRequest) {
     }
   )
 
-  await supabase.auth.exchangeCodeForSession(code)
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  if (error) return NextResponse.redirect(`${origin}/login?error=auth_error`)
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.redirect(`${origin}/login`)
-
-  // Vérifie si l'utilisateur a déjà un pressing (compte existant)
-  const { data: userData } = await supabase
-    .from('users')
-    .select('pressing_id')
-    .eq('id', user.id)
-    .single()
-
-  if (userData?.pressing_id) {
-    return NextResponse.redirect(`${origin}/dashboard`)
-  }
-
-  // Nouvel utilisateur Google → créer pressing + user + settings
-  const displayName = (user.user_metadata?.full_name as string) || user.email?.split('@')[0] || 'Mon Pressing'
-
-  const { data: pressing } = await supabase
-    .from('pressings')
-    .insert({ name: displayName, email: user.email || '', phone: '' })
-    .select()
-    .single()
-
-  if (pressing) {
-    await supabase.from('users').insert({
-      id: user.id,
-      pressing_id: pressing.id,
-      role: 'admin',
-      full_name: displayName,
-      phone: '',
-    })
-    await supabase.from('settings').insert({ pressing_id: pressing.id })
-  }
-
-  return NextResponse.redirect(`${origin}/onboarding`)
+  // La création du pressing/user est gérée dans l'onboarding
+  // On redirige simplement vers le dashboard (qui redirige vers /onboarding si besoin)
+  return NextResponse.redirect(`${origin}/dashboard`)
 }
