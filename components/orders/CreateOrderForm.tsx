@@ -19,6 +19,7 @@ interface OrderItem {
   quantity: number
   unit_price: number
   subtotal: number
+  notes: string
 }
 
 interface CreateOrderFormProps {
@@ -43,6 +44,9 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [showServiceDropdown, setShowServiceDropdown] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [deposit, setDeposit] = useState(0)
+  const [depositDate, setDepositDate] = useState('')
+  const [depositMode, setDepositMode] = useState<'on_site' | 'pickup'>('on_site')
+  const [deliveryMode, setDeliveryMode] = useState<'on_site' | 'delivery'>('on_site')
   const [pickupDate, setPickupDate] = useState('')
   const [notes, setNotes] = useState('')
   const [applyTax, setApplyTax] = useState(false)
@@ -156,6 +160,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
         quantity: 1,
         unit_price: price,
         subtotal: price,
+        notes: '',
       }])
     }
     setServiceSearch('')
@@ -200,6 +205,9 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           total,
           payment_method: paymentMethod,
           deposit: deposit || 0,
+          deposit_date: depositDate || null,
+          deposit_mode: depositMode,
+          delivery_mode: deliveryMode,
           pickup_date: pickupDate || null,
           notes: notes || null,
           status: 'pending',
@@ -406,22 +414,33 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
         {items.length > 0 && (
           <div className="mt-4 space-y-2">
             {items.map(item => (
-              <div key={item.service_id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{item.service_name}</p>
-                  <p className="text-xs text-gray-400">{formatCurrency(item.unit_price)} / unité</p>
+              <div key={item.service_id} className="p-3 bg-gray-50 rounded-lg space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{item.service_name}</p>
+                    <p className="text-xs text-gray-400">{formatCurrency(item.unit_price)} / unité</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button type="button" onClick={() => updateQuantity(item.service_id, item.quantity - 1)}
+                      className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">−</button>
+                    <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                    <button type="button" onClick={() => updateQuantity(item.service_id, item.quantity + 1)}
+                      className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
+                  </div>
+                  <span className="text-sm font-bold w-20 text-right shrink-0">{formatCurrency(item.subtotal)}</span>
+                  <button type="button" onClick={() => removeItem(item.service_id)} className="text-red-400 hover:text-red-600 p-1 shrink-0">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <button type="button" onClick={() => updateQuantity(item.service_id, item.quantity - 1)}
-                    className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">−</button>
-                  <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
-                  <button type="button" onClick={() => updateQuantity(item.service_id, item.quantity + 1)}
-                    className="w-7 h-7 rounded-full bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center font-bold">+</button>
-                </div>
-                <span className="text-sm font-bold w-20 text-right shrink-0">{formatCurrency(item.subtotal)}</span>
-                <button type="button" onClick={() => removeItem(item.service_id)} className="text-red-400 hover:text-red-600 p-1 shrink-0">
-                  <Trash2 size={14} />
-                </button>
+                <input
+                  type="text"
+                  value={item.notes}
+                  onChange={e => setItems(items.map(i =>
+                    i.service_id === item.service_id ? { ...i, notes: e.target.value } : i
+                  ))}
+                  placeholder="Note sur cet article (couleur, taille, instruction...)"
+                  className="w-full text-xs px-2 py-1.5 rounded border border-gray-200 bg-white text-gray-700 placeholder:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
               </div>
             ))}
           </div>
@@ -438,6 +457,32 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
       <Card className="p-5">
         <h3 className="font-semibold text-gray-900 mb-4">3. Détails</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Mode de dépôt</Label>
+            <select
+              value={depositMode}
+              onChange={e => setDepositMode(e.target.value as 'on_site' | 'pickup')}
+              className="w-full h-10 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="on_site">Sur place</option>
+              <option value="pickup">Collecte domicile</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label>Mode de retrait</Label>
+            <select
+              value={deliveryMode}
+              onChange={e => setDeliveryMode(e.target.value as 'on_site' | 'delivery')}
+              className="w-full h-10 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="on_site">Sur place</option>
+              <option value="delivery">Livraison domicile</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label>Date de dépôt</Label>
+            <Input type="date" value={depositDate} onChange={e => setDepositDate(e.target.value)} className="h-10" />
+          </div>
           <div className="space-y-2">
             <Label>Date de retrait prévue</Label>
             <Input type="date" value={pickupDate} onChange={e => setPickupDate(e.target.value)} className="h-10" />

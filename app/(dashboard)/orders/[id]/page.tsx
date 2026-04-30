@@ -99,12 +99,17 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Articles</h3>
         <div className="space-y-2">
           {order.order_items?.map((item: any) => (
-            <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-0">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{item.service_name}</p>
-                <p className="text-xs text-gray-400">x{item.quantity} · {formatCurrency(item.unit_price)} / unité</p>
+            <div key={item.id} className="py-2 border-b border-gray-50 last:border-0">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{item.service_name}</p>
+                  <p className="text-xs text-gray-400">x{item.quantity} · {formatCurrency(item.unit_price)} / unité</p>
+                </div>
+                <span className="text-sm font-semibold shrink-0 ml-3">{formatCurrency(item.subtotal)}</span>
               </div>
-              <span className="text-sm font-semibold">{formatCurrency(item.subtotal)}</span>
+              {item.notes && (
+                <p className="mt-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">{item.notes}</p>
+              )}
             </div>
           ))}
         </div>
@@ -143,25 +148,49 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Détails</h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
+            <p className="text-gray-400">Dépôt</p>
+            <p className="font-medium text-gray-900">
+              {order.deposit_mode === 'pickup' ? '🚗 Collecte domicile' : '🏪 Sur place'}
+            </p>
+          </div>
+          <div>
+            <p className="text-gray-400">Retrait</p>
+            <p className="font-medium text-gray-900">
+              {order.delivery_mode === 'delivery' ? '🚚 Livraison domicile' : '🏪 Sur place'}
+            </p>
+          </div>
+          {order.deposit_date && (
+            <div>
+              <p className="text-gray-400">Date de dépôt</p>
+              <p className="font-medium text-gray-900">{formatDate(order.deposit_date)}</p>
+            </div>
+          )}
+          {order.pickup_date && (
+            <div>
+              <p className="text-gray-400">Date de retrait prévue</p>
+              <p className="font-medium text-gray-900">{formatDate(order.pickup_date)}</p>
+            </div>
+          )}
+          <div>
             <p className="text-gray-400">Paiement</p>
             <p className="font-medium text-gray-900">{getPaymentLabel(order.payment_method)}</p>
           </div>
           <div>
             <p className="text-gray-400">Statut paiement</p>
             <p className={`font-medium ${order.paid ? 'text-green-600' : 'text-orange-500'}`}>
-              {order.paid ? 'Payé' : 'En attente'}
+              {order.paid ? 'Payé ✓' : 'En attente'}
             </p>
           </div>
-          {order.pickup_date && (
-            <div>
-              <p className="text-gray-400">Date de retrait</p>
-              <p className="font-medium text-gray-900">{formatDate(order.pickup_date)}</p>
-            </div>
-          )}
           {order.delivered_at && (
             <div>
               <p className="text-gray-400">Livré le</p>
               <p className="font-medium text-gray-900">{formatDate(order.delivered_at)}</p>
+            </div>
+          )}
+          {order.cancelled_reason && (
+            <div className="col-span-2">
+              <p className="text-red-400 text-xs mb-1">Motif d&apos;annulation</p>
+              <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded">{order.cancelled_reason}</p>
             </div>
           )}
         </div>

@@ -1,6 +1,8 @@
 export type Role = 'admin' | 'employee'
 export type OrderStatus = 'pending' | 'in_progress' | 'ready' | 'delivered' | 'cancelled'
 export type PaymentMethod = 'cash' | 'card' | 'transfer'
+export type DepositMode = 'on_site' | 'pickup'
+export type DeliveryMode = 'on_site' | 'delivery'
 export type ClientType = 'individual' | 'business'
 
 export interface Pressing {
@@ -69,6 +71,10 @@ export interface Order {
   payment_method: PaymentMethod
   paid: boolean
   deposit: number
+  deposit_date?: string
+  deposit_mode?: DepositMode
+  delivery_mode?: DeliveryMode
+  cancelled_reason?: string
   pickup_date?: string
   delivered_at?: string
   notes?: string
@@ -86,6 +92,7 @@ export interface OrderItem {
   quantity: number
   unit_price: number
   subtotal: number
+  notes?: string
   created_at: string
 }
 
