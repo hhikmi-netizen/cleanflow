@@ -105,16 +105,15 @@ export default function OnboardingPage() {
           .single()
         if (pressingError) throw pressingError
 
-        // Créer le profil utilisateur
-        const { error: userError } = await supabase.from('users').insert({
+        // Upsert le profil utilisateur (au cas où il existe déjà sans pressing_id)
+        const { error: userError } = await supabase.from('users').upsert({
           id: user.id,
           pressing_id: pressing.id,
           role: 'admin',
           full_name: (user.user_metadata?.full_name as string) || pressingName,
           phone,
-        })
-        // Ignorer duplicate key (tentative de re-création)
-        if (userError && !userError.message.includes('duplicate')) throw userError
+        }, { onConflict: 'id' })
+        if (userError) throw userError
 
         // Créer les settings
         await supabase.from('settings').insert({ pressing_id: pressing.id })
@@ -132,7 +131,9 @@ export default function OnboardingPage() {
 
       setStep(2)
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la configuration')
+      const msg = (err as { message?: string })?.message || 'Erreur lors de la configuration'
+      toast.error(msg)
+      console.error('[onboarding step1]', err)
     } finally {
       setLoading(false)
     }
