@@ -58,3 +58,48 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   const cleaned = phone.replace(/\D/g, '')
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`
 }
+
+export function getIncidentTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    damage:     'Détérioration',
+    loss:       'Perte d\'article',
+    delay:      'Retard',
+    quality:    'Qualité insuffisante',
+    wrong_item: 'Erreur d\'article',
+    other:      'Autre',
+  }
+  return labels[type] || type
+}
+
+export function getIncidentStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    open:           'Ouvert',
+    in_progress:    'En cours',
+    waiting_client: 'En attente client',
+    resolved:       'Résolu',
+    rejected:       'Refusé',
+  }
+  return labels[status] || status
+}
+
+export function getIncidentStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    open:           'bg-red-100 text-red-800',
+    in_progress:    'bg-blue-100 text-blue-800',
+    waiting_client: 'bg-yellow-100 text-yellow-800',
+    resolved:       'bg-green-100 text-green-800',
+    rejected:       'bg-gray-100 text-gray-600',
+  }
+  return colors[status] || 'bg-gray-100 text-gray-800'
+}
+
+export function getResolutionLabel(action: string): string {
+  const labels: Record<string, string> = {
+    partial_refund: 'Remboursement partiel',
+    full_refund:    'Remboursement total',
+    gesture:        'Geste commercial',
+    redo_service:   'Nouvelle prestation',
+    none:           'Aucune action',
+  }
+  return labels[action] || action
+}

@@ -5,9 +5,10 @@ import { redirect, notFound } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import OrderStatusBadge from '@/components/orders/OrderStatusBadge'
 import OrderActions from '@/components/orders/OrderActions'
+import PaymentHistory from '@/components/orders/PaymentHistory'
 import { formatCurrency, formatDate, formatDateTime, getPaymentLabel, buildWhatsAppUrl, buildGoogleMapsUrl } from '@/lib/utils'
 import Link from 'next/link'
-import { ChevronLeft, MapPin, Phone, MessageCircle } from 'lucide-react'
+import { ChevronLeft, MapPin, Phone, MessageCircle, AlertTriangle } from 'lucide-react'
 
 export default async function OrderDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerClient()
@@ -36,6 +37,16 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     .eq('id', userData!.pressing_id)
     .single()
 
+  const { data: userData2 } = await supabase
+    .from('users').select('role').eq('id', user.id).single()
+  const isAdmin = userData2?.role === 'admin'
+
+  const { data: payments } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('order_id', params.id)
+    .order('created_at')
+
   const whatsappMsg = order.status === 'ready'
     ? `Bonjour ${order.clients?.name}, votre commande ${order.order_number} est prête ! Vous pouvez venir la récupérer. Merci.`
     : `Bonjour ${order.clients?.name}, concernant votre commande ${order.order_number}...`
@@ -57,6 +68,16 @@ export default async function OrderDetailPage({ params }: { params: { id: string
 
       {/* Actions statut */}
       <OrderActions orderId={order.id} currentStatus={order.status} paid={order.paid} />
+
+      {/* Signaler un problème */}
+      <div className="flex justify-end">
+        <Link href={`/incidents/new?orderId=${order.id}&clientId=${order.clients?.id || ''}&orderNumber=${order.order_number}`}>
+          <button className="flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-700 hover:bg-orange-50 px-3 py-1.5 rounded-lg transition-colors">
+            <AlertTriangle size={13} />
+            Signaler un problème
+          </button>
+        </Link>
+      </div>
 
       {/* Client */}
       {order.clients && (
@@ -141,6 +162,18 @@ export default async function OrderDetailPage({ params }: { params: { id: string
             </div>
           )}
         </div>
+      </Card>
+
+      {/* Paiements */}
+      <Card className="p-4">
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Paiements</h3>
+        <PaymentHistory
+          orderId={order.id}
+          orderTotal={Number(order.total)}
+          orderDeposit={Number(order.deposit)}
+          payments={payments || []}
+          isAdmin={isAdmin}
+        />
       </Card>
 
       {/* Infos commande */}

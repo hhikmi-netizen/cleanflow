@@ -2,17 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ShoppingBag, Users, Package, Settings, LogOut } from 'lucide-react'
+import { Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/orders', label: 'Commandes', icon: ShoppingBag },
-  { href: '/clients', label: 'Clients', icon: Users },
-  { href: '/services', label: 'Catalogue', icon: Package },
-  { href: '/settings', label: 'Paramètres', icon: Settings },
+  { href: '/dashboard',  label: 'Dashboard',   icon: Home },
+  { href: '/orders',     label: 'Commandes',    icon: ShoppingBag },
+  { href: '/clients',    label: 'Clients',      icon: Users },
+  { href: '/services',   label: 'Catalogue',    icon: Package },
+  { href: '/incidents',  label: 'SAV',          icon: AlertTriangle },
+  { href: '/settings',   label: 'Paramètres',   icon: Settings },
 ]
 
 export default function Sidebar() {

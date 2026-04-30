@@ -107,6 +107,45 @@ export interface Settings {
   updated_at: string
 }
 
+export type IncidentType = 'damage' | 'loss' | 'delay' | 'quality' | 'wrong_item' | 'other'
+export type IncidentStatus = 'open' | 'in_progress' | 'waiting_client' | 'resolved' | 'rejected'
+export type ResolutionAction = 'partial_refund' | 'full_refund' | 'gesture' | 'redo_service' | 'none'
+
+export interface Incident {
+  id: string
+  pressing_id: string
+  order_id?: string
+  client_id?: string
+  type: IncidentType
+  description: string
+  status: IncidentStatus
+  resolution_action?: ResolutionAction
+  resolution_notes?: string
+  created_at: string
+  updated_at: string
+  orders?: { order_number: string } | null
+  clients?: { name: string; phone: string } | null
+}
+
+export interface IncidentHistory {
+  id: string
+  incident_id: string
+  user_id?: string
+  action: string
+  note?: string
+  created_at: string
+}
+
+export interface Payment {
+  id: string
+  pressing_id: string
+  order_id: string
+  amount: number
+  method: PaymentMethod | 'credit'
+  notes?: string
+  created_at: string
+}
+
 export interface DashboardStats {
   ordersToday: number
   revenueToday: number
