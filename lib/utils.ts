@@ -71,12 +71,14 @@ export function buildGoogleMapsUrl(address: string): string {
 
 export function buildWhatsAppUrl(phone: string, message: string): string {
   let cleaned = phone.replace(/\D/g, '')
-  // Normalize Moroccan local format (0XXXXXXXXX → 212XXXXXXXXX)
   if (cleaned.startsWith('0') && cleaned.length === 10) {
     cleaned = '212' + cleaned.slice(1)
   }
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`
 }
+
+/** Alias explicite — format : https://wa.me/{phone}?text={message encodé} */
+export const generateWhatsAppLink = buildWhatsAppUrl
 
 export function getIncidentTypeLabel(type: string): string {
   const labels: Record<string, string> = {
@@ -159,12 +161,13 @@ interface WaTemplateParams {
   remaining?: number
   trackingUrl?: string
   pickupDate?: string
+  pickupCode?: string         // code validation retrait (ex: 4 derniers chiffres du n° commande)
 }
 
 export function getWhatsAppTemplates(params: WaTemplateParams) {
   const {
     clientName, orderNumber, pressingName, pressingPhone, pressingAddress,
-    total, remaining, trackingUrl, pickupDate,
+    total, remaining, trackingUrl, pickupDate, pickupCode,
   } = params
 
   const trackLine = trackingUrl ? `\n🔗 Suivi : ${trackingUrl}` : ''
@@ -234,6 +237,17 @@ export function getWhatsAppTemplates(params: WaTemplateParams) {
         `Bonjour ${clientName},\n\n` +
         `Votre commande *${orderNumber}* a bien été livrée. Merci de votre confiance !\n\n` +
         `À très bientôt chez *${pressingName}* 🙏`,
+    },
+    {
+      id: 'pickup_code',
+      label: 'Envoyer code',
+      emoji: '🔑',
+      message:
+        `Bonjour ${clientName} 👋\n\n` +
+        `Votre code de retrait pour la commande *${orderNumber}* chez *${pressingName}* est :\n\n` +
+        `*${pickupCode || orderNumber.replace(/\D/g, '').slice(-4).padStart(4, '0')}*\n\n` +
+        `Présentez ce code en boutique pour récupérer vos articles.${locationLine}\n\n` +
+        `À bientôt ! 🙏`,
     },
   ]
 }
