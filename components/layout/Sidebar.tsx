@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, ShoppingBag, Users, Package, Settings, LogOut,
   AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet,
-  Plus, MapPin, ShieldAlert, Monitor, Landmark,
+  Plus, MapPin, ShieldAlert, Monitor, Landmark, Bell,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -19,6 +19,7 @@ const allNavItems = [
   { href: '/clients',            label: 'Clients',       icon: Users,         adminOnly: false },
   { href: '/services',           label: 'Catalogue',     icon: Package,       adminOnly: false },
   { href: '/incidents',          label: 'SAV',           icon: AlertTriangle, adminOnly: false },
+  { href: '/reminders',          label: 'Rappels WA',    icon: Bell,          adminOnly: false },
   { href: '/livraisons',         label: 'Livraisons',    icon: Truck,         adminOnly: false },
   { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin,        adminOnly: false },
   { href: '/caisse',             label: 'Caisse',        icon: Wallet,        adminOnly: false },
