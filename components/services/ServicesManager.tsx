@@ -13,16 +13,31 @@ import { formatCurrency } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 
 const DEFAULT_SERVICES = [
-  { name: 'Chemise', category: 'Vêtements', price_individual: 15, price_business: 12 },
-  { name: 'Pantalon', category: 'Vêtements', price_individual: 20, price_business: 16 },
-  { name: 'Costume (veste + pantalon)', category: 'Vêtements', price_individual: 45, price_business: 38 },
-  { name: 'Robe', category: 'Vêtements', price_individual: 35, price_business: 28 },
-  { name: 'Manteau / Djellaba', category: 'Vêtements', price_individual: 50, price_business: 40 },
-  { name: 'Couverture', category: 'Linge de maison', price_individual: 60, price_business: 50 },
-  { name: 'Rideau (le mètre)', category: 'Linge de maison', price_individual: 12, price_business: 10 },
+  // Vêtements
+  { name: 'Chemise repassage',       category: 'Vêtements',     price_individual: 15,  price_business: 12,  unit: 'pièce' },
+  { name: 'Chemise nettoyage',       category: 'Vêtements',     price_individual: 28,  price_business: 22,  unit: 'pièce' },
+  { name: 'Pantalon',                category: 'Vêtements',     price_individual: 25,  price_business: 20,  unit: 'pièce' },
+  { name: 'Costume complet',         category: 'Vêtements',     price_individual: 85,  price_business: 70,  unit: 'pièce' },
+  { name: 'Veste / Blazer',          category: 'Vêtements',     price_individual: 55,  price_business: 45,  unit: 'pièce' },
+  { name: 'Robe de soirée',          category: 'Vêtements',     price_individual: 90,  price_business: 75,  unit: 'pièce' },
+  { name: 'Manteau / Pardessus',     category: 'Vêtements',     price_individual: 80,  price_business: 65,  unit: 'pièce' },
+  // Tenues marocaines
+  { name: 'Djellaba homme',          category: 'Marocain',      price_individual: 65,  price_business: 55,  unit: 'pièce' },
+  { name: 'Djellaba femme',          category: 'Marocain',      price_individual: 75,  price_business: 60,  unit: 'pièce' },
+  { name: 'Caftan / Takchita',       category: 'Marocain',      price_individual: 150, price_business: 120, unit: 'pièce' },
+  { name: 'Burnous',                 category: 'Marocain',      price_individual: 100, price_business: 85,  unit: 'pièce' },
+  // Linge de maison
+  { name: 'Couette simple',          category: 'Linge maison',  price_individual: 120, price_business: 95,  unit: 'pièce' },
+  { name: 'Couette double',          category: 'Linge maison',  price_individual: 150, price_business: 120, unit: 'pièce' },
+  { name: 'Parure de lit',           category: 'Linge maison',  price_individual: 65,  price_business: 50,  unit: 'pièce' },
+  { name: 'Tapis (par m²)',          category: 'Linge maison',  price_individual: 55,  price_business: 45,  unit: 'm²'    },
+  { name: 'Rideau (par mètre)',      category: 'Linge maison',  price_individual: 35,  price_business: 28,  unit: 'ml'    },
+  // Kilo & Retouche
+  { name: 'Linge au kilo',           category: 'Kilo',          price_individual: 20,  price_business: 16,  unit: 'kg'    },
+  { name: 'Retouche simple',         category: 'Retouche',      price_individual: 30,  price_business: 25,  unit: 'pièce' },
 ]
 
-const CATEGORIES = ['Vêtements', 'Linge de maison', 'Cuir & Daim', 'Autre']
+const CATEGORIES = ['Vêtements', 'Marocain', 'Linge maison', 'Kilo', 'Retouche', 'Autre']
 
 interface ServicesManagerProps {
   services: Service[]
@@ -116,7 +131,7 @@ export default function ServicesManager({ services: initialServices, pressingId,
   const addDefaultServices = async () => {
     setLoading(true)
     try {
-      const payload = DEFAULT_SERVICES.map(s => ({ ...s, pressing_id: pressingId, unit: 'pièce', active: true }))
+      const payload = DEFAULT_SERVICES.map(s => ({ ...s, pressing_id: pressingId, active: true }))
       const { data, error } = await supabase.from('services').insert(payload).select()
       if (error) throw error
       setServices([...services, ...(data || [])])

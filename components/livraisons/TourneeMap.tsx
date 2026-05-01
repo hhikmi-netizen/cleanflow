@@ -481,9 +481,13 @@ function FallbackList({
 }) {
   return (
     <div className="space-y-3 p-4">
-      <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-700 text-xs">
-        <AlertTriangle size={14} className="shrink-0" />
-        Mode liste — configurez <code className="font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> pour activer la carte.
+      <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-700 text-xs">
+        <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+        <span>
+          <strong>Carte Maps non configurée</strong> — mode liste activé. Pour activer la carte interactive, ajoutez{' '}
+          <code className="font-mono bg-amber-100 px-1 rounded">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>{' '}
+          dans les variables d&apos;environnement Vercel.
+        </span>
       </div>
       {stops.map((stop, idx) => (
         <StopCard
@@ -572,12 +576,18 @@ export default function TourneeMap({ stops: rawStops, teamMembers, pressingName,
   if (stops.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3 max-w-xs">
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
             <MapPin size={20} className="text-gray-400" />
           </div>
           <p className="font-semibold text-gray-700">Aucun arrêt aujourd&apos;hui</p>
-          <p className="text-sm text-gray-400">Les collectes et livraisons du jour apparaissent ici</p>
+          <p className="text-sm text-gray-400">Les commandes avec mode dépôt &quot;collecte&quot; ou livraison &quot;à domicile&quot; apparaissent ici.</p>
+          {!hasMapsKey && (
+            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2">
+              <AlertTriangle size={12} className="shrink-0" />
+              Carte non configurée — ajoutez <code className="font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> dans Vercel pour activer la carte interactive.
+            </p>
+          )}
         </div>
       </div>
     )

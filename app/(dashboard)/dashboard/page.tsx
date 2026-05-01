@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card'
 import { getStatusColor, getStatusLabel, formatDate } from '@/lib/utils'
 import { redirect } from 'next/navigation'
 import VisualMenu from '@/components/dashboard/VisualMenu'
+import DemoBanner from '@/components/dashboard/DemoBanner'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -216,6 +217,8 @@ export default async function DashboardPage() {
           color="purple"
         />
       </div>
+
+      <DemoBanner hasData={orders.length > 3} />
 
       <VisualMenu />
 

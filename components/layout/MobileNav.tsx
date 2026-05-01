@@ -19,14 +19,13 @@ const employeeNavItems = [
 ]
 
 const adminOnlyNavItems = [
-  { href: '/dashboard',          label: 'Dashboard',     icon: Home          },
   { href: '/express',            label: 'Dépôt express', icon: Zap           },
   { href: '/services',           label: 'Catalogue',     icon: Package       },
-  { href: '/incidents',          label: 'SAV',           icon: AlertTriangle },
-  { href: '/reminders',          label: 'Rappels WA',    icon: Bell          },
   { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin        },
   { href: '/caisse',             label: 'Caisse',        icon: Wallet        },
   { href: '/credit',             label: 'Impayés',       icon: Landmark      },
+  { href: '/incidents',          label: 'SAV',           icon: AlertTriangle },
+  { href: '/reminders',          label: 'Rappels WA',    icon: Bell          },
   { href: '/stats',              label: 'Statistiques',  icon: BarChart2     },
   { href: '/exports',            label: 'Exports CSV',   icon: Download      },
   { href: '/pricing',            label: 'Tarification',  icon: Tag           },
@@ -41,8 +40,9 @@ interface MobileNavProps {
 export default function MobileNav({ role = 'employee' }: MobileNavProps) {
   const [open, setOpen]  = useState(false)
   const isAdmin          = role === 'admin'
+  const dashboardItem    = { href: '/dashboard', label: 'Dashboard', icon: Home }
   const navItems         = isAdmin
-    ? [...employeeNavItems, ...adminOnlyNavItems]
+    ? [dashboardItem, ...employeeNavItems, ...adminOnlyNavItems]
     : employeeNavItems
 
   const pathname = usePathname()
