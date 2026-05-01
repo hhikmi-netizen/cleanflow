@@ -28,7 +28,7 @@ interface CartItem {
 
 const TEXTILE_TYPES = ['Chemise', 'Pantalon', 'Costume', 'Robe', 'Veste', 'Manteau', 'Linge', 'Autre']
 
-function normalizePhone(s: string) { return s.replace(/[\s\-\.]/g, '') }
+function normalizePhone(s: string) { return s.replace(/[\s\-.]/g, '') }
 
 interface Props {
   services: Service[]

@@ -19,7 +19,7 @@ function CustomTooltip({ active, payload }: any) {
   )
 }
 
-export default function TopServicesChart({ data, currency }: Props) {
+export default function TopServicesChart({ data, currency: _currency }: Props) {
   const truncated = data.map(d => ({
     ...d,
     shortName: d.name.length > 14 ? d.name.slice(0, 13) + '…' : d.name,

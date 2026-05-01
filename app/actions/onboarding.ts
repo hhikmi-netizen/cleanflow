@@ -13,7 +13,7 @@ function getSupabase(cookieStore: Awaited<ReturnType<typeof cookies>>) {
         setAll(cookiesToSet) {
           try {
             cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          } catch {}
+          } catch { /* RSC cookie write no-op */ }
         },
       },
     }

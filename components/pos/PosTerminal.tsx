@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import {
   Search, X, Plus, Minus, Trash2, Check, Banknote, CreditCard,
-  ArrowRight, Wallet, User, UserPlus, Phone, ChevronDown, ChevronUp,
+  ArrowRight, Wallet, User, UserPlus, Phone,
   Printer, MessageCircle, RotateCcw, ShoppingCart, Tag, Percent,
 } from 'lucide-react'
 import { formatCurrency, buildWhatsAppUrl, getWhatsAppTemplates } from '@/lib/utils'

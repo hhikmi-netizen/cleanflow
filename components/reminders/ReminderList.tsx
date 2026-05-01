@@ -82,7 +82,7 @@ interface Props {
   readyThresholdDays: number
 }
 
-export default function ReminderList({ reminders, pressing, readyThresholdDays }: Props) {
+export default function ReminderList({ reminders, pressing, readyThresholdDays: _readyThresholdDays }: Props) {
   const [tab, setTab] = useState<FilterTab>('all')
   const [logs, setLogs] = useState<Record<string, ReminderLog | null>>({})
 

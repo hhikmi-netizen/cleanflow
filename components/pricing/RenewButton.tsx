@@ -14,7 +14,7 @@ interface Props {
   size?: 'default' | 'sm'
 }
 
-export default function RenewButton({ customerSubId, clientId, variant = 'outline', size = 'sm' }: Props) {
+export default function RenewButton({ customerSubId, clientId: _clientId, variant = 'outline', size = 'sm' }: Props) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 

@@ -38,7 +38,7 @@ interface CreateOrderFormProps {
 
 // Normalize phone for search (strip spaces, dashes, dots)
 function normalizePhone(s: string) {
-  return s.replace(/[\s\-\.]/g, '')
+  return s.replace(/[\s\-.]/g, '')
 }
 
 export default function CreateOrderForm({ clients: initialClients, services, pressingId, taxRate, preselectedClientId }: CreateOrderFormProps) {
@@ -452,6 +452,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
 
       // Use subscription if selected
       if (selectedSubId) {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         await useSubscriptionOnOrder({
           customerSubId: selectedSubId,
           orderId: order.id,

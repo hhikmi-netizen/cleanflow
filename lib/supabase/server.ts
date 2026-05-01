@@ -14,7 +14,7 @@ export const createServerClient = async () => {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {}
+          } catch { /* cookie write in RSC context is a no-op */ }
         },
       },
     }

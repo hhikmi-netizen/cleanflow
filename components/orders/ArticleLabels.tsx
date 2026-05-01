@@ -71,7 +71,7 @@ ${labelsWithCode.map(item => `
     </svg></div>` : ''}
   </div>`).join('')}
 </div>
-<script>window.onload = function() { window.print(); }<\/script>
+<script>window.onload = function() { window.print(); }</script>
 </body></html>`
     w.document.write(html)
     w.document.close()

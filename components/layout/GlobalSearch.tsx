@@ -14,7 +14,7 @@ interface SearchResult {
 }
 
 function normalize(s: string) {
-  return s.toLowerCase().replace(/[\s\-\.]/g, '')
+  return s.toLowerCase().replace(/[\s\-.]/g, '')
 }
 
 export default function GlobalSearch() {
