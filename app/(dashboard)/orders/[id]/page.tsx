@@ -42,11 +42,13 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     .from('users').select('role').eq('id', user.id).single()
   const isAdmin = userData2?.role === 'admin'
 
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('*')
-    .eq('order_id', params.id)
-    .order('created_at')
+  const [{ data: payments }, { data: waSettings }] = await Promise.all([
+    supabase.from('payments').select('*').eq('order_id', params.id).order('created_at'),
+    supabase.from('settings')
+      .select('whatsapp_enabled, auto_notify_ready')
+      .eq('pressing_id', userData!.pressing_id)
+      .single(),
+  ])
 
   const whatsappMsg = order.status === 'ready'
     ? `Bonjour ${order.clients?.name}, votre commande ${order.order_number} est prête ! Vous pouvez venir la récupérer. Merci.`
@@ -85,7 +87,16 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       </div>
 
       {/* Actions statut */}
-      <OrderActions orderId={order.id} currentStatus={order.status} paid={order.paid} clientId={order.clients?.id} />
+      <OrderActions
+        orderId={order.id}
+        currentStatus={order.status}
+        paid={order.paid}
+        clientId={order.clients?.id}
+        autoNotifyReady={!!(waSettings?.whatsapp_enabled && waSettings?.auto_notify_ready)}
+        clientPhone={order.clients?.phone}
+        orderNumber={order.order_number}
+        pressingName={pressing?.name}
+      />
 
       {/* Actions secondaires */}
       <div className="flex items-center justify-between flex-wrap gap-2">

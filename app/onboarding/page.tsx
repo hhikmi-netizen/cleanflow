@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { Loader2, Check, ChevronRight } from 'lucide-react'
+import { Loader2, Check, ChevronRight, ChevronLeft } from 'lucide-react'
 import { getPressingStatus, setupPressing, addServices, addClient } from '@/app/actions/onboarding'
 
 const DEFAULT_SERVICES = [
@@ -212,6 +212,15 @@ export default function OnboardingPage() {
               ))}
             </div>
             <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="h-11 px-3"
+                disabled={loading}
+              >
+                <ChevronLeft size={16} />
+              </Button>
               <Button onClick={() => handleStep2()} className="flex-1 h-11"
                 disabled={loading || selectedServices.length === 0}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Ajouter ces services'}
@@ -239,6 +248,15 @@ export default function OnboardingPage() {
               </div>
             </div>
             <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(2)}
+                className="h-11 px-3"
+                disabled={loading}
+              >
+                <ChevronLeft size={16} />
+              </Button>
               <Button onClick={() => handleStep3()} className="flex-1 h-11" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Ajouter et terminer'}
               </Button>

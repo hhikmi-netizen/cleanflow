@@ -7,6 +7,7 @@ import { formatCurrency } from '@/lib/utils'
 import RevenueChart from '@/components/stats/RevenueChart'
 import StatusDonut from '@/components/stats/StatusDonut'
 import TopServicesChart from '@/components/stats/TopServicesChart'
+import StatsExportButton from '@/components/stats/StatsExportButton'
 import { TrendingUp, ShoppingBag, Users, ArrowUp, ArrowDown, Minus, Clock } from 'lucide-react'
 import Link from 'next/link'
 
@@ -157,9 +158,16 @@ export default async function StatsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>
-        <p className="text-sm text-gray-500 mt-1">Mois en cours · comparaison mois précédent</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>
+          <p className="text-sm text-gray-500 mt-1">Mois en cours · comparaison mois précédent</p>
+        </div>
+        <StatsExportButton
+          revenueData={revenueChartData}
+          topServices={topServices}
+          topClients={topClients}
+        />
       </div>
 
       {/* KPIs */}

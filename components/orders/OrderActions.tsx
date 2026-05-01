@@ -5,16 +5,21 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Loader2, FileText, Receipt, XCircle, X, Star } from 'lucide-react'
+import { Loader2, FileText, Receipt, XCircle, X, Star, MessageCircle } from 'lucide-react'
 import { OrderStatus } from '@/lib/types'
 import Link from 'next/link'
 import { awardOrderPoints } from '@/app/actions/loyalty'
+import { buildWhatsAppUrl } from '@/lib/utils'
 
 interface OrderActionsProps {
   orderId: string
   currentStatus: OrderStatus
   paid: boolean
   clientId?: string
+  autoNotifyReady?: boolean
+  clientPhone?: string
+  orderNumber?: string
+  pressingName?: string
 }
 
 const statusFlow: Record<OrderStatus, { label: string; next: OrderStatus; color: string } | null> = {
@@ -25,7 +30,10 @@ const statusFlow: Record<OrderStatus, { label: string; next: OrderStatus; color:
   cancelled:   null,
 }
 
-export default function OrderActions({ orderId, currentStatus, paid, clientId }: OrderActionsProps) {
+export default function OrderActions({
+  orderId, currentStatus, paid, clientId,
+  autoNotifyReady, clientPhone, orderNumber, pressingName,
+}: OrderActionsProps) {
   const [loading, setLoading] = useState(false)
   const [paidLoading, setPaidLoading] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
@@ -47,6 +55,13 @@ export default function OrderActions({ orderId, currentStatus, paid, clientId }:
       toast.error('Erreur lors de la mise à jour')
     } else {
       toast.success('Statut mis à jour')
+
+      if (newStatus === 'ready' && autoNotifyReady && clientPhone) {
+        const msg = `Bonjour, votre commande *${orderNumber}* est prête à récupérer chez *${pressingName || 'votre pressing'}*. À bientôt ! 🎉`
+        window.open(buildWhatsAppUrl(clientPhone, msg), '_blank')
+        toast.success('Notification WhatsApp ouverte', { icon: '💬' })
+      }
+
       if (newStatus === 'delivered' && clientId) {
         const result = await awardOrderPoints(orderId)
         if (result && result.points > 0) {
