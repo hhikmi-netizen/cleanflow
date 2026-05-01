@@ -1,101 +1,77 @@
 # CleanFlow — Roadmap
 
----
+## V1 — MVP (livré — 2026-05-01)
 
-## V1 — MVP Stabilisé (En cours)
+### Core
+- [x] Auth email + Google OAuth, onboarding multi-étapes
+- [x] Gestion commandes complète (création, statuts, paiements partiels)
+- [x] Mode dépôt / retrait (sur place, collecte, livraison)
+- [x] Catalogue services avec prix particulier/professionnel
+- [x] Facture imprimable
+- [x] Ticket de suivi public avec QR code
+- [x] Contrôle qualité par article
+- [x] Numérotation automatique des factures (FACT-YYYYMM-NNNNN)
+- [x] Codes article (ART-XXXXXX)
 
-**Objectif :** Corriger les bugs métier critiques et compléter le flux commande de base.
+### Clients
+- [x] Fiche client avec historique complet et KPIs
+- [x] Relevé de compte avec filtre date
+- [x] Facture groupée B2B
+- [x] Fidélité (points + échange)
+- [x] Abonnements (chemises, kilo, prépayé, entreprise)
+- [x] Recherche globale (nom, téléphone, code)
 
-### Sprint 1 — Bugs critiques (ACTUEL)
-- [x] Fix auth OAuth (cookie session)
-- [x] Fix onboarding (création pressing si manquant)
-- [ ] **Fix dropdown client dans /orders/new** (clic extérieur ne ferme pas, pas d'option "créer")
-- [ ] **Création rapide client depuis /orders/new** (modal ou inline)
+### Tarification
+- [x] Moteur de règles de prix (express, kilo, lot, zone, horaire, promo)
+- [x] Remises configurables
+- [x] Termes de paiement B2B (net15 / net30 / net45 / net60)
 
-### Sprint 2 — Flux commande complet
-- [ ] Mode dépôt (sur place / collecte) + mode retrait (sur place / livraison)
-- [ ] Notes par article
-- [ ] Date dépôt explicite
-- [ ] Annulation commande avec motif
-- [ ] Amélioration bon de commande : logo pressing, format professionnel
+### Opérationnel
+- [x] Board livraison / collecte avec assignation chauffeur
+- [x] SAV / incidents avec journal
+- [x] Dépôt express comptoir
+- [x] Clôture de caisse
+- [x] Caisse rapide POS avec catalogue visuel et pictogrammes
 
-### Sprint 3 — Caisse & paiements
-- [ ] Paiement partiel (enregistrer encaissement)
-- [ ] Reçu de paiement (PDF séparé du bon de commande)
-- [ ] Historique paiements par commande
-- [ ] Clôture journalière (rapport Z)
+### UX
+- [x] Menu visuel avec tuiles et pictogrammes métier pressing
+- [x] Mode Complet / Mode Rapide (localStorage)
+- [x] Interface optimisée comptoir (iPad, PC)
+- [x] Alertes dashboard (retards, impayés, quotas faibles, B2B échus)
 
-### Sprint 4 — Facturation
-- [ ] Facture officielle avec numérotation auto
-- [ ] Logo pressing sur documents
-- [ ] Mentions légales Maroc (IF, Patente, RC)
-- [ ] Export PDF direct (jsPDF déjà installé)
+### Notifications
+- [x] WhatsApp via wa.me (aucune API tierce)
+- [x] Toggles par événement dans les paramètres
 
----
-
-## V1.1 — Notifications & CRM
-
-**Objectif :** Activer les outils de communication client et enrichir les fiches.
-
-### Sprint 5 — WhatsApp
-- [ ] Modèles messages configurables (settings)
-- [ ] Envoi WhatsApp contextuel depuis commande (lien wa.me pré-rempli avec template)
-- [ ] Modèles : créée / prête / rappel retrait / en livraison / livrée
-- [ ] Préparation API WATI (structure en place)
-
-### Sprint 6 — CRM clients
-- [ ] Solde client (crédit)
-- [ ] Programme fidélité simple (points)
-- [ ] Préférences client (champ libre + tags)
-- [ ] Rappels automatiques retrait dépassé (cron Supabase)
-- [ ] Import CSV clients
-
-### Sprint 7 — Livraison
-- [ ] Mode collecte / livraison sur commande
-- [ ] Assignation employé/livreur
-- [ ] Vue livreur (liste tournée du jour)
-- [ ] Bouton Google Maps depuis détail commande
-- [ ] Frais livraison par zone (configurable dans settings)
+### Équipe & Stats
+- [x] Invitation par code, rôles admin/employé
+- [x] Statistiques (graphiques CA, statuts, top services)
 
 ---
 
-## V2 — SaaS Complet
+## V1.1 — Stabilisation et polish
 
-**Objectif :** Monétisation, analytics, multi-utilisateurs, et scalabilité.
+- [ ] Tests E2E Playwright (onboarding, commande, paiement)
+- [ ] Impression directe depuis la caisse rapide (Bluetooth thermal printer)
+- [ ] Calcul rendu monnaie en caisse rapide
+- [ ] Export CSV commandes et clients
+- [ ] Relevé B2B avec signature électronique
+- [ ] Notifications WhatsApp groupées (résumé fin de journée)
+- [ ] Mode hors-ligne (PWA, sync au retour réseau)
 
-### Sprint 8 — Gestion équipe
-- [ ] Page gestion employés (admin : inviter, rôles, désactiver)
-- [ ] Rôles : admin / employé / livreur
-- [ ] Permissions par rôle (lecture seule pour employé)
-- [ ] Audit log actions (qui a fait quoi)
+## V2 — Croissance
 
-### Sprint 9 — Analytics & Comptabilité
-- [ ] Dashboard analytics : CA trend (graphique), top services, top clients
-- [ ] Export CSV/Excel ventes par période
-- [ ] Rapport mensuel PDF
-- [ ] Dépenses fournisseurs (module simple)
-- [ ] Marge approximative
+- [ ] Application mobile (React Native ou PWA installable)
+- [ ] Intégration paiement en ligne (CMI, PayZone)
+- [ ] Devis + bon de livraison signable
+- [ ] Gestion des stocks produits (teintures, détachants)
+- [ ] Multi-caisse / multi-point de collecte
+- [ ] Rapport comptable mensuel (PDF)
+- [ ] API publique documentée
 
-### Sprint 10 — SaaS & Monétisation
-- [ ] Plans tarifaires (Free / Pro / Premium)
-- [ ] Intégration Stripe paiement abonnement
-- [ ] Limitation par plan (commandes, utilisateurs, fonctionnalités)
-- [ ] Page compte / upgrade
-- [ ] Dashboard super-admin (Anthropic / fondateur)
+## V3 — Plateforme
 
-### Sprint 11 — Performance & Mobile
-- [ ] Pagination sur toutes les listes (offset/limit)
-- [ ] PWA installable (manifest + service worker)
-- [ ] Mode offline basique (cache list commandes)
-- [ ] Dark mode
-- [ ] Tests e2e Playwright
-
----
-
-## Principes de développement
-
-1. **Travailler par modules incrémentaux** — chaque sprint = 1 commit clair par feature
-2. **Tester après chaque modification** — `npm run build` obligatoire
-3. **Préserver l'existant** — ne pas écraser les composants fonctionnels
-4. **Mobile-first** — toute feature doit être testée sur mobile
-5. **Données réelles Maroc** — prix DH, TVA configurable, ICE, mentions légales
+- [ ] Mode franchise (multi-pressing sous une marque)
+- [ ] Marketplace (clients trouvent un pressing via l'app)
+- [ ] Notation et avis clients
+- [ ] Programme de fidélité inter-pressings

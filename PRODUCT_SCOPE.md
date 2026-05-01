@@ -1,156 +1,99 @@
-# CleanFlow — Product Scope
+# CleanFlow — Périmètre produit
 
-SaaS de gestion de pressing (dry cleaner) pour le Maroc.  
-Multi-tenant isolé par `pressing_id`. Stack : Next.js 16 App Router + Supabase + Tailwind/shadcn.
+## Vision
 
----
+Outil de gestion opérationnelle pour pressing marocain : enregistrement des dépôts, suivi des articles, encaissement, livraison, et fidélisation client — accessible à des opérateurs peu technophiles depuis un iPad ou un PC comptoir.
 
-## FONCTIONNALITÉS ACTUELLEMENT IMPLÉMENTÉES
+## Contexte métier
 
-### AUTH & ONBOARDING
-- [x] Inscription email/mot de passe (confirmation email désactivée)
-- [x] Connexion Google OAuth
-- [x] Callback OAuth (`/auth/callback`)
-- [x] Onboarding 3 étapes : pressing → services → premier client
-- [x] Server Actions pour les écritures onboarding (migration @supabase/ssr)
+- Marché cible : pressings (laveries + nettoyage à sec) au Maroc
+- Monnaie : Dirham (MAD)
+- Langue : Français
+- Types de clients : particuliers + B2B (hôtels, restaurants, institutions)
+- Modes de dépôt : sur place ou collecte à domicile
+- Modes de retrait : sur place ou livraison
 
-### DASHBOARD (`/dashboard`)
-- [x] Stats du jour : CA, count commandes
-- [x] CA du mois
-- [x] Commandes en attente (count)
-- [x] Total clients
-- [x] 5 dernières commandes avec client, status, total
-- [x] Actions rapides : + Commande, Gérer clients
+## Modules inclus dans le MVP
 
-### CLIENTS (`/clients`, `/clients/new`, `/clients/[id]`)
-- [x] Liste avec search (nom / phone / email)
-- [x] Badge type : Particulier / Professionnel
-- [x] Colonne total commandes et CA total
-- [x] Création client : nom*, phone*, email, adresse, type, ICE, notes
-- [x] Fiche détail : stats + historique 10 commandes
-- [x] Actions : appel tel, WhatsApp manuel, Google Maps
-- [x] Modification inline
+### 1. Gestion des commandes
+- Création commande avec sélection articles du catalogue
+- Mode caisse rapide POS (pictogrammes métier, tuiles visuelles)
+- Statuts : en_attente → en_cours → prête → livrée / annulée
+- Contrôle qualité par article (état textile, tache, retouche)
+- Acompte + paiements partiels
+- Bon de commande imprimable
+- Numérotation automatique (FACT-YYYYMM-NNNNN)
+- Ticket de suivi public (QR code, page /track/[token])
+- Codes article (ART-XXXXXX) pour identification
 
-### COMMANDES (`/orders`, `/orders/new`, `/orders/[id]`)
-- [x] Liste avec search (n° commande ou nom client) et filtre status
-- [x] Création commande :
-  - [x] Recherche client par nom/téléphone (dropdown)
-  - [x] Sélection articles avec quantités +/-
-  - [x] Prix auto selon type client (particulier / pro)
-  - [x] Date retrait prévue
-  - [x] Mode paiement (espèces / carte / virement)
-  - [x] Acompte
-  - [x] TVA optionnelle
-  - [x] Notes
-  - [x] Récapitulatif dynamique (sous-total, TVA, acompte, total, reste à payer)
-- [x] Détail commande : articles, client, statuts, paiement
-- [x] Flow status : pending → in_progress → ready → delivered + annulé
-- [x] Toggle payé
-- [x] Bon de commande imprimable PDF (`/orders/[id]/invoice`)
-  - [x] En-tête pressing, données client, tableau articles, totaux
-  - [x] Pied de page configurable
-  - [x] CSS print
+### 2. Gestion des clients
+- Fiche client (particulier / professionnel / ICE)
+- Historique complet des commandes et KPIs
+- Relevé de compte avec filtre date
+- Facture groupée (multi-commandes B2B)
+- Fidélité : points cumulés, seuils, échange
+- Abonnements : forfait chemises, kilo, prépayé, entreprise
+- Recherche par nom, téléphone, code client
 
-### CATALOGUE SERVICES (`/services`)
-- [x] Liste services groupés par catégorie
-- [x] Toggle actif/inactif
-- [x] Create/Edit/Delete inline
-- [x] Import services par défaut (7 services pré-configurés)
+### 3. Catalogue et tarification
+- Articles avec prix particulier et professionnel
+- Moteur de règles de prix : express, kilo, lot, livraison, zone géographique, horaire, promo
+- Remises : pourcentage ou montant fixe, par scope (commande / service / client)
+- Abonnements produits avec quota/solde par client
+- Termes de paiement B2B : net15 / net30 / net45 / net60
 
-### PARAMÈTRES (`/settings`)
-- [x] Infos pressing : nom, phone, email, ICE, adresse, TVA, devise
-- [x] WhatsApp (UI prête, envoi non implémenté)
-- [x] Pied de page tickets
+### 4. SAV / Incidents
+- Types : dommage, perte, retard, qualité
+- Journal d'historique
+- Résolution avec note
 
-### BASE DE DONNÉES
-- [x] 7 tables : pressings, users, clients, services, orders, order_items, settings
-- [x] RLS multi-tenant par pressing_id sur toutes les tables
-- [x] Auto-génération n° commande CMD-YYMM-XXXX
-- [x] Trigger stats clients (total_orders, total_spent)
+### 5. Livraisons
+- Board kanban : en attente → en route → livré
+- Assignation à un membre de l'équipe (chauffeur)
+- Notification WhatsApp proposée à chaque avancement
 
----
+### 6. Caisse
+- Clôture quotidienne (espèces / carte / virement)
+- Comparaison attendu vs réel avec écart
+- Historique des clôtures
 
-## FONCTIONNALITÉS ABSENTES (à implémenter)
+### 7. Statistiques
+- CA du jour, du mois, tendance mensuelle
+- Graphique de répartition des statuts
+- Top services par fréquence, top clients
 
-### MODULE COMMANDES — Priorité HAUTE
-- [ ] **BUG** : dropdown client ne se ferme pas au clic extérieur
-- [ ] **BUG** : aucune option "créer nouveau client" depuis commande
-- [ ] Mode dépôt : sur place / collecte domicile
-- [ ] Mode retrait : sur place / livraison à domicile
-- [ ] Notes par article dans commande
-- [ ] Photo ou QR code article
-- [ ] Statut "collecte" (avant réception)
-- [ ] Date dépôt explicite
-- [ ] Annulation avec motif
+### 8. Notifications WhatsApp
+- Templates pré-remplis : création, prête, en route, livrée
+- Toggles par événement dans les paramètres
+- Via lien wa.me (aucune API tierce, zéro coût)
 
-### MODULE CAISSE / PAIEMENT — Priorité HAUTE
-- [ ] Caisse virtuelle (solde du jour)
-- [ ] Paiement partiel (enregistrer un paiement sans clore la commande)
-- [ ] Historique encaissements par commande
-- [ ] Reçu de paiement (distinct du bon de commande)
-- [ ] Clôture journalière (rapport Z)
-- [ ] Crédit client (mettre en compte)
+### 9. Équipe
+- Invitation par code pressing (UUID)
+- Rôles : admin / employé
+- Accès restreint selon le rôle
 
-### MODULE FACTURATION — Priorité HAUTE
-- [ ] Facture officielle (distinct du bon de commande)
-- [ ] Numérotation auto factures (FAC-YYMM-XXXX)
-- [ ] Logo du pressing sur documents
-- [ ] Mentions légales Maroc
-- [ ] Avoir / annulation facture
-- [ ] Export PDF direct (sans print dialog)
-- [ ] Devis (avant commande)
+### 10. UX opérateur
+- Menu visuel avec grandes tuiles et pictogrammes métier
+- Mode Complet / Mode Rapide persisté en localStorage
+- Interface optimisée comptoir (iPad, PC)
+- Alertes dashboard (retards, impayés, quotas faibles, B2B échus)
 
-### MODULE COMPTABILITÉ — Priorité MOYENNE
-- [ ] Export CSV / Excel des ventes
-- [ ] Ventes par période (date range)
-- [ ] Rapport mensuel
-- [ ] Dépenses fournisseurs
-- [ ] Catégories de dépenses
-- [ ] Marge approximative
+### 11. Onboarding
+- Création du pressing (nom, téléphone, ICE, TVA)
+- Sélection des services de départ
+- Ajout du premier client
 
-### MODULE CLIENTS / CRM — Priorité MOYENNE
-- [ ] Solde client (crédit/débit)
-- [ ] Programme fidélité (points)
-- [ ] Abonnements clients (forfait mensuel)
-- [ ] Préférences client (ex. amidon léger, cintres exclus)
-- [ ] Rappels automatiques retrait dépassé
-- [ ] Import CSV clients
+## Hors périmètre MVP
 
-### MODULE NOTIFICATIONS — Priorité HAUTE
-- [ ] Envoi WhatsApp manuel immédiat (wa.me link avec message pré-rempli) — déjà partiel
-- [ ] Modèles messages configurables : commande créée, prête, rappel retrait, en livraison, livrée
-- [ ] Préparation intégration WATI / Twilio
-- [ ] Activation par pressing dans settings
+- Application mobile native
+- Intégration paiement en ligne
+- Comptabilité avancée / export FEC
+- Gestion des stocks produits
+- Devis formel
+- Multi-pressing / franchise
+- API publique
+- Notifications push
 
-### MODULE COLLECTE / LIVRAISON — Priorité MOYENNE
-- [ ] Gestion ramassage (collecte domicile)
-- [ ] Assignation chauffeur/livreur
-- [ ] Tournées simples
-- [ ] Bouton Google Maps depuis commande
-- [ ] Statut livreur
-- [ ] Frais livraison configurable par zone
+## Multi-tenant
 
-### MODULE PARAMÈTRES — Priorité MOYENNE
-- [ ] Upload logo pressing (Supabase Storage)
-- [ ] Horaires d'ouverture (JSONB déjà en DB)
-- [ ] Gestion employés (invite, rôles admin/employé/livreur)
-- [ ] Modes de paiement activés/désactivés
-- [ ] Zones de livraison + frais
-- [ ] Personnalisation couleurs document
-
-### MODULE SAAS — Priorité BASSE
-- [ ] Plan gratuit (limite 50 commandes/mois)
-- [ ] Plan Pro (commandes illimitées + WhatsApp)
-- [ ] Plan Premium (multi-employés + livreurs + analytics)
-- [ ] Stripe/PayPal intégration
-- [ ] Limitation par plan
-- [ ] Page compte / abonnement
-
-### TECHNIQUE — Priorité BASSE
-- [ ] Pagination sur toutes les listes (actuellement full-fetch)
-- [ ] Analytics avancés avec graphiques (CA trend, top services)
-- [ ] Dark mode
-- [ ] PWA (installable mobile)
-- [ ] Offline mode basique
-- [ ] Tests e2e (Playwright)
-- [ ] Error monitoring (Sentry)
+Chaque pressing est isolé par `pressing_id`. Le RLS PostgreSQL garantit qu'aucun utilisateur ne voit les données d'un autre pressing.

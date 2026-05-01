@@ -1,102 +1,99 @@
-# CleanFlow — Gestion de pressing au Maroc
+# CleanFlow — Gestion de pressing pour le Maroc
 
-Application SaaS pour la gestion de pressings : commandes, clients, catalogue, facturation.
+SaaS multi-tenant de gestion opérationnelle pour les pressings (dry cleaners) au Maroc.
 
-## Stack
+## Accès
 
-- **Next.js 16** (App Router, Turbopack)
-- **TypeScript**
-- **Tailwind CSS + shadcn/ui**
-- **Supabase** (Auth + PostgreSQL + RLS)
-- **Vercel** (déploiement)
+| Environnement | URL |
+|---|---|
+| Production | https://cleanflow-nu.vercel.app |
+| GitHub | https://github.com/hhikmi-netizen/cleanflow |
+| Supabase | https://jxjeftdbuuyvfbdywswy.supabase.co |
 
----
+## Stack technique
 
-## Démarrage rapide
+- **Frontend** : Next.js 16 (App Router, Turbopack), TypeScript, Tailwind CSS, shadcn/ui
+- **Backend** : Supabase (PostgreSQL + Auth + RLS), Server Actions
+- **Déploiement** : Vercel (auto-deploy sur push `master`)
+- **Auth** : Email/mot de passe + Google OAuth (confirmation email désactivée)
 
-### 1. Installer
+## Démarrage local
 
 ```bash
-git clone https://github.com/votre-user/cleanflow.git
+# 1. Cloner le repo
+git clone https://github.com/hhikmi-netizen/cleanflow.git
 cd cleanflow
-npm install
-```
 
-### 2. Configurer Supabase
-
-1. Créer un projet sur [supabase.com](https://supabase.com/dashboard)
-2. Aller dans **SQL Editor** et exécuter `supabase/schema.sql`
-3. Copier les credentials :
-
-```bash
+# 2. Variables d'environnement
 cp .env.example .env.local
-# Éditer .env.local avec vos vraies clés
-```
+# Remplir NEXT_PUBLIC_SUPABASE_URL et NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-### 3. Lancer en développement
+# 3. Installer les dépendances
+npm install
 
-```bash
+# 4. Lancer le dev server
 npm run dev
 ```
 
----
+## Structure du projet
 
-## Routes
-
-| Route | Description | Auth |
-|-------|-------------|------|
-| `/login` | Connexion | Public |
-| `/signup` | Création compte | Public |
-| `/onboarding` | Wizard 3 étapes | Connecté |
-| `/dashboard` | Tableau de bord | Connecté |
-| `/orders` | Liste commandes | Connecté |
-| `/orders/new` | Créer commande | Connecté |
-| `/clients` | Liste clients | Connecté |
-| `/services` | Catalogue | Admin |
-| `/settings` | Paramètres | Admin |
-
----
-
-## Déploiement Vercel
-
-```bash
-git add .
-git commit -m "feat: CleanFlow MVP"
-git remote add origin https://github.com/votre-user/cleanflow.git
-git push -u origin main
+```
+app/
+  (auth)/          # login, signup
+  (dashboard)/     # toutes les pages protégées
+    dashboard/     # accueil + stats du jour + menu visuel
+    orders/        # commandes (liste, création, détail, facture, caisse rapide)
+    clients/       # clients (liste, fiche, relevé, abonnement, facture groupée)
+    services/      # catalogue articles
+    pricing/       # règles de prix, abonnements, remises
+    incidents/     # SAV / réclamations
+    livraisons/    # board livraison/collecte
+    caisse/        # clôture de caisse
+    stats/         # statistiques et graphiques
+    team/          # gestion des employés
+    settings/      # paramètres pressing
+    express/       # dépôt express comptoir
+  onboarding/      # setup initial du pressing
+  track/[token]/   # suivi commande public (sans auth)
+components/        # composants React réutilisables
+lib/               # utils, types, priceEngine, hooks
+supabase/
+  schema.sql       # schéma initial complet
+  migrations/      # 013 migrations incrémentales
 ```
 
-Puis sur [vercel.com/new](https://vercel.com/new) :
-1. Importer le repo
-2. Ajouter les variables env :
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Deploy
+## Modules
 
-Dans Supabase → Authentication → URL Configuration :
-- Site URL : `https://votre-app.vercel.app`
-- Redirect URLs : `https://votre-app.vercel.app/**`
+| Module | Route | État |
+|---|---|---|
+| Dashboard | /dashboard | Fonctionnel |
+| Commandes | /orders, /orders/new, /orders/[id] | Fonctionnel |
+| Caisse rapide POS | /orders/quick | Fonctionnel |
+| Clients | /clients, /clients/new, /clients/[id] | Fonctionnel |
+| Relevé de compte | /clients/[id]/releve | Fonctionnel |
+| Abonnements client | /clients/[id]/subscription/[subId] | Fonctionnel |
+| Facture groupée | /clients/[id]/batch-invoice | Fonctionnel |
+| Catalogue | /services | Fonctionnel |
+| Tarification | /pricing | Fonctionnel |
+| SAV | /incidents | Fonctionnel |
+| Livraisons | /livraisons | Fonctionnel |
+| Dépôt express | /express | Fonctionnel |
+| Caisse | /caisse | Fonctionnel |
+| Statistiques | /stats | Fonctionnel |
+| Équipe | /team | Fonctionnel |
+| Paramètres | /settings | Fonctionnel |
+| Tracking public | /track/[token] | Fonctionnel |
+| Facture imprimable | /orders/[id]/invoice | Fonctionnel |
 
----
+## Commandes utiles
 
-## Checklist test MVP
+```bash
+npm run build          # build production (inclut typecheck)
+npx next lint          # lint ESLint
+npx tsc --noEmit       # typecheck seul
+npx supabase db push   # appliquer les migrations en production
+```
 
-- [ ] Signup → pressing + user créés
-- [ ] Onboarding 3 étapes fonctionnel
-- [ ] Créer commande (client + articles + total)
-- [ ] Changer statut commande (pending → delivered)
-- [ ] Marquer commande comme payée
-- [ ] WhatsApp + téléphone + Google Maps client
-- [ ] Ajouter/modifier client
-- [ ] Créer/modifier services avec prix
-- [ ] Modifier paramètres pressing
-- [ ] Interface mobile (hamburger menu, touch targets)
-- [ ] Un utilisateur ne voit que son pressing (RLS)
+## Règles de développement
 
----
-
-## Sécurité
-
-- RLS activé sur toutes les tables
-- Isolation totale par `pressing_id`
-- `.env.local` jamais commité
+Lire [DO_NOT_REGENERATE.md](./DO_NOT_REGENERATE.md) avant toute modification importante.

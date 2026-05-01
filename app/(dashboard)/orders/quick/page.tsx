@@ -23,7 +23,7 @@ export default async function QuickOrderPage() {
   const [servicesRes, pressingRes] = await Promise.all([
     supabase
       .from('services')
-      .select('id, name, base_price, category')
+      .select('id, name, price_individual, price_business, category')
       .eq('pressing_id', pressingId)
       .eq('active', true)
       .order('name'),
@@ -34,9 +34,17 @@ export default async function QuickOrderPage() {
       .single(),
   ])
 
+  // Map price_individual → base_price for ArticleCatalog (individual tarif by default)
+  const services = (servicesRes.data || []).map(s => ({
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    base_price: s.price_individual,
+  }))
+
   return (
     <QuickOrderForm
-      services={servicesRes.data || []}
+      services={services}
       pressingId={pressingId}
       pressingName={pressingRes.data?.name || ''}
       pressingPhone={pressingRes.data?.phone || undefined}
