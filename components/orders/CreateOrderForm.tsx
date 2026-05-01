@@ -474,7 +474,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
     <form onSubmit={handleSubmit} className="space-y-5 max-w-2xl">
 
       {/* ── 1. CLIENT ── */}
-      <Card className="p-5">
+      <Card className="p-5 overflow-visible">
         <h3 className="font-semibold text-gray-900 mb-4">1. Client</h3>
 
         {selectedClient ? (
@@ -631,7 +631,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
       </Card>
 
       {/* ── 2. ARTICLES ── */}
-      <Card className="p-5">
+      <Card className="p-5 overflow-visible">
         <h3 className="font-semibold text-gray-900 mb-4">2. Articles</h3>
         <div ref={serviceDropdownRef} className="relative">
           <div className="relative">
