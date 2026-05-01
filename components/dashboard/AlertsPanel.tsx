@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, Clock, CreditCard, MessageCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Clock, CreditCard, MessageCircle, ChevronDown, ChevronUp, RefreshCw, Gauge } from 'lucide-react'
 import { buildWhatsAppUrl } from '@/lib/utils'
 
 interface AlertOrder {
@@ -25,19 +25,28 @@ interface ExpiringSub {
   daysLeft: number
 }
 
+interface LowQuotaSub {
+  id: string
+  clientId: string
+  clientName: string
+  subName: string
+  pctUsed: number
+}
+
 interface Props {
   readyOverdue: AlertOrder[]
   processingLate: AlertOrder[]
   unpaidTotal: number
   unpaidCount: number
   expiringSubs?: ExpiringSub[]
+  lowQuotaSubs?: LowQuotaSub[]
 }
 
 function days(n: number) { return `${n}j` }
 
-export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal, unpaidCount, expiringSubs = [] }: Props) {
+export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal, unpaidCount, expiringSubs = [], lowQuotaSubs = [] }: Props) {
   const [open, setOpen] = useState(true)
-  const total = readyOverdue.length + processingLate.length + (unpaidTotal > 0 ? 1 : 0) + (expiringSubs.length > 0 ? 1 : 0)
+  const total = readyOverdue.length + processingLate.length + (unpaidTotal > 0 ? 1 : 0) + (expiringSubs.length > 0 ? 1 : 0) + (lowQuotaSubs.length > 0 ? 1 : 0)
   if (total === 0) return null
 
   return (
@@ -69,6 +78,27 @@ export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal,
               </div>
               <Link href="/orders" className="text-sm font-bold text-red-600 hover:underline">
                 {unpaidTotal.toFixed(2)} DH
+              </Link>
+            </div>
+          )}
+
+          {/* Low quota subscriptions */}
+          {lowQuotaSubs.length > 0 && (
+            <div className="px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gauge size={14} className="text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {lowQuotaSubs.length} forfait{lowQuotaSubs.length > 1 ? 's' : ''} presque épuisé{lowQuotaSubs.length > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {lowQuotaSubs.slice(0, 2).map(s => `${s.clientName} (${s.pctUsed}%)`).join(', ')}
+                    {lowQuotaSubs.length > 2 && ` +${lowQuotaSubs.length - 2}`}
+                  </p>
+                </div>
+              </div>
+              <Link href="/pricing" className="text-xs text-orange-600 hover:underline font-medium shrink-0">
+                Renouveler →
               </Link>
             </div>
           )}

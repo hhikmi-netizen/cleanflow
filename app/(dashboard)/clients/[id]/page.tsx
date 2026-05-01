@@ -14,7 +14,7 @@ import {
 import Link from 'next/link'
 import {
   ChevronLeft, MapPin, Phone, MessageCircle, ShoppingBag,
-  AlertTriangle, CreditCard, Package, TrendingUp, Clock, Star, FileText,
+  AlertTriangle, CreditCard, Package, TrendingUp, Clock, Star, FileText, History,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -265,25 +265,32 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                       <p className="text-xs text-blue-600">Expire le {formatDate(cs.expires_at)}</p>
                     )}
                   </div>
-                  <div className="text-right">
-                    {isPrepaid && (
-                      <p className={`text-sm font-bold ${Number(cs.balance) > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                        {formatCurrency(cs.balance)}
-                      </p>
-                    )}
-                    {isShirts && sub.quota_quantity && (
-                      <p className="text-sm font-bold text-blue-700">
-                        {sub.quota_quantity - cs.quota_used} pièces restantes
-                      </p>
-                    )}
-                    {isKilo && sub.quota_kilo && (
-                      <p className="text-sm font-bold text-blue-700">
-                        {(Number(sub.quota_kilo) - Number(cs.kilo_used)).toFixed(2)} kg restants
-                      </p>
-                    )}
-                    {!isPrepaid && !isShirts && !isKilo && (
-                      <p className="text-xs text-blue-600">{formatCurrency(sub?.price || 0)}</p>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      {isPrepaid && (
+                        <p className={`text-sm font-bold ${Number(cs.balance) > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                          {formatCurrency(cs.balance)}
+                        </p>
+                      )}
+                      {isShirts && sub.quota_quantity && (
+                        <p className="text-sm font-bold text-blue-700">
+                          {sub.quota_quantity - cs.quota_used} pièces restantes
+                        </p>
+                      )}
+                      {isKilo && sub.quota_kilo && (
+                        <p className="text-sm font-bold text-blue-700">
+                          {(Number(sub.quota_kilo) - Number(cs.kilo_used)).toFixed(2)} kg restants
+                        </p>
+                      )}
+                      {!isPrepaid && !isShirts && !isKilo && (
+                        <p className="text-xs text-blue-600">{formatCurrency(sub?.price || 0)}</p>
+                      )}
+                    </div>
+                    <Link href={`/clients/${params.id}/subscription/${cs.id}`}
+                      className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition-colors"
+                      title="Historique du forfait">
+                      <History size={14} />
+                    </Link>
                   </div>
                 </div>
               )

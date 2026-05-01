@@ -36,7 +36,7 @@ export default async function DashboardPage() {
 
   const expiryThreshold = new Date(today.getTime() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0]
 
-  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes, expiringSubs] = await Promise.all([
+  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes, expiringSubs, allActiveSubs] = await Promise.all([
     supabase
       .from('orders')
       .select('id, total, status, created_at')
@@ -81,6 +81,12 @@ export default async function DashboardPage() {
       .eq('status', 'active')
       .lte('expires_at', expiryThreshold)
       .gte('expires_at', todayStr),
+    // All active subs for low-quota detection
+    supabase
+      .from('customer_subscriptions')
+      .select('id, balance, quota_used, kilo_used, clients(id, name), subscriptions(name, sub_type, quota_quantity, quota_kilo, credits, price)')
+      .eq('pressing_id', pressingId)
+      .eq('status', 'active'),
   ])
 
   const orders = ordersResult.data || []
@@ -116,6 +122,23 @@ export default async function DashboardPage() {
     expiresAt: cs.expires_at,
     daysLeft: Math.ceil((new Date(cs.expires_at).getTime() - today.getTime()) / (24 * 3600 * 1000)),
   }))
+
+  const lowQuotaSubsList = (allActiveSubs.data || []).flatMap((cs: any) => {
+    const sub = cs.subscriptions
+    const clientId = (cs.clients as any)?.id
+    if (!sub || !clientId) return []
+    let pctUsed: number | null = null
+    if (sub.sub_type === 'prepaid') {
+      const total = sub.credits || sub.price || 0
+      if (total > 0) pctUsed = Math.round(((total - Number(cs.balance)) / total) * 100)
+    } else if (sub.sub_type === 'shirts' && sub.quota_quantity) {
+      pctUsed = Math.round((Number(cs.quota_used) / sub.quota_quantity) * 100)
+    } else if (sub.sub_type === 'kilo' && sub.quota_kilo) {
+      pctUsed = Math.round((Number(cs.kilo_used) / sub.quota_kilo) * 100)
+    }
+    if (pctUsed === null || pctUsed < 80) return []
+    return [{ id: cs.id, clientId, clientName: (cs.clients as any)?.name || '—', subName: sub.name || '—', pctUsed }]
+  })
 
   return (
     <div className="space-y-6">
@@ -164,6 +187,7 @@ export default async function DashboardPage() {
         unpaidTotal={unpaidTotal}
         unpaidCount={unpaidCount}
         expiringSubs={expiringSubsList}
+        lowQuotaSubs={lowQuotaSubsList}
       />
 
       <Card className="p-5">

@@ -336,6 +336,22 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
     if (!clientId) { toast.error('Sélectionnez un client'); return }
     if (items.length === 0) { toast.error('Ajoutez au moins un article'); return }
 
+    if (selectedSubId && selectedSub) {
+      const sub = selectedSub.subscriptions
+      if (sub?.sub_type === 'shirts' && sub.quota_quantity) {
+        const totalQty = items.reduce((s, i) => s + i.quantity, 0)
+        const remaining = sub.quota_quantity - (selectedSub.quota_used || 0)
+        if (totalQty > remaining) {
+          toast.error(`Quota insuffisant — ${remaining} pièce${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''} sur ce forfait`)
+          return
+        }
+      }
+      if (sub?.sub_type === 'prepaid' && useSubBalance && subBalanceAmount > Number(selectedSub.balance)) {
+        toast.error(`Solde insuffisant — ${formatCurrency(Number(selectedSub.balance))} disponible`)
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const pickupSlot = depositMode === 'pickup' && depositDate
