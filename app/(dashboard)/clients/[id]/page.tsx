@@ -13,7 +13,7 @@ import {
 import Link from 'next/link'
 import {
   ChevronLeft, MapPin, Phone, MessageCircle, ShoppingBag,
-  AlertTriangle, CreditCard, Package, TrendingUp, Clock,
+  AlertTriangle, CreditCard, Package, TrendingUp, Clock, Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -47,6 +47,13 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const { data: allPayments } = orderIds.length > 0
     ? await supabase.from('payments').select('*').in('order_id', orderIds)
     : { data: [] }
+
+  // Active subscriptions for this client
+  const { data: activeSubscriptions } = await supabase
+    .from('customer_subscriptions')
+    .select('*, subscriptions(name, sub_type, price, credits, quota_quantity, quota_kilo)')
+    .eq('client_id', client.id)
+    .eq('status', 'active')
 
   // Incidents for this client
   const { data: incidents } = await supabase
@@ -203,6 +210,56 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         )}
         <ClientEditSection client={client} pressingId={userData!.pressing_id} />
       </Card>
+
+      {/* Active subscriptions */}
+      {activeSubscriptions && activeSubscriptions.length > 0 && (
+        <Card className="p-5">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Star size={14} /> Abonnements actifs
+          </h3>
+          <div className="space-y-2">
+            {activeSubscriptions.map((cs: any) => {
+              const sub = cs.subscriptions
+              const isPrepaid = sub?.sub_type === 'prepaid'
+              const isShirts = sub?.sub_type === 'shirts'
+              const isKilo = sub?.sub_type === 'kilo'
+              return (
+                <div key={cs.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">{sub?.name}</p>
+                    {cs.expires_at && (
+                      <p className="text-xs text-blue-600">Expire le {formatDate(cs.expires_at)}</p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    {isPrepaid && (
+                      <p className={`text-sm font-bold ${Number(cs.balance) > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {formatCurrency(cs.balance)}
+                      </p>
+                    )}
+                    {isShirts && sub.quota_quantity && (
+                      <p className="text-sm font-bold text-blue-700">
+                        {sub.quota_quantity - cs.quota_used} pièces restantes
+                      </p>
+                    )}
+                    {isKilo && sub.quota_kilo && (
+                      <p className="text-sm font-bold text-blue-700">
+                        {(Number(sub.quota_kilo) - Number(cs.kilo_used)).toFixed(2)} kg restants
+                      </p>
+                    )}
+                    {!isPrepaid && !isShirts && !isKilo && (
+                      <p className="text-xs text-blue-600">{formatCurrency(sub?.price || 0)}</p>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="mt-2">
+            <Link href="/pricing" className="text-xs text-blue-500 hover:underline">Gérer les abonnements →</Link>
+          </div>
+        </Card>
+      )}
 
       {/* Recent articles */}
       {allItems.length > 0 && (

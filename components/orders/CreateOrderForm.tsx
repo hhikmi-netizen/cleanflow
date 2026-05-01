@@ -52,6 +52,12 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [applyTax, setApplyTax] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Discount
+  const [discountType, setDiscountType] = useState<'none' | 'percentage' | 'fixed'>('none')
+  const [discountValue, setDiscountValue] = useState(0)
+  const [discountLabel, setDiscountLabel] = useState('')
+  const [availableDiscounts, setAvailableDiscounts] = useState<{ id: string; name: string; discount_type: string; value: number }[]>([])
+
   // Quick client creation
   const [showNewClientForm, setShowNewClientForm] = useState(false)
   const [newClientName, setNewClientName] = useState('')
@@ -63,6 +69,12 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const serviceDropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const supabase = createClient()
+
+  // Load available discount rules
+  useEffect(() => {
+    supabase.from('discount_rules').select('id, name, discount_type, value').eq('active', true)
+      .then(({ data }) => { if (data) setAvailableDiscounts(data) })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -184,8 +196,14 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   }
 
   const subtotal = items.reduce((sum, i) => sum + i.subtotal, 0)
-  const tax = applyTax ? subtotal * (taxRate / 100) : 0
-  const total = subtotal + tax
+  const discountAmount = discountType === 'percentage'
+    ? subtotal * (discountValue / 100)
+    : discountType === 'fixed'
+      ? Math.min(discountValue, subtotal)
+      : 0
+  const discountedSubtotal = subtotal - discountAmount
+  const tax = applyTax ? discountedSubtotal * (taxRate / 100) : 0
+  const total = discountedSubtotal + tax
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -212,6 +230,10 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           notes: notes || null,
           status: 'pending',
           paid: false,
+          discount_type: discountType,
+          discount_value: discountValue,
+          discount_amount: discountAmount,
+          discount_label: discountLabel || null,
         })
         .select()
         .single()
@@ -535,6 +557,77 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
         </div>
       </Card>
 
+      {/* ── REMISE ── */}
+      <Card className="p-5">
+        <h3 className="font-semibold text-gray-900 mb-3">Remise</h3>
+        <div className="space-y-3">
+          {/* Quick-apply from saved discounts */}
+          {availableDiscounts.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {availableDiscounts.map(d => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => {
+                    setDiscountType(d.discount_type === 'percentage' ? 'percentage' : 'fixed')
+                    setDiscountValue(Number(d.value))
+                    setDiscountLabel(d.name)
+                  }}
+                  className="text-xs px-2.5 py-1 rounded-full border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+                >
+                  {d.name} ({d.discount_type === 'percentage' ? `${d.value}%` : `${d.value} DH`})
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-2">
+            {(['none', 'percentage', 'fixed'] as const).map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => { setDiscountType(t); if (t === 'none') setDiscountValue(0) }}
+                className={`py-2 rounded-lg border text-xs font-medium transition-colors ${
+                  discountType === t ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                {t === 'none' ? 'Aucune' : t === 'percentage' ? 'En %' : 'Montant fixe'}
+              </button>
+            ))}
+          </div>
+
+          {discountType !== 'none' && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">
+                  {discountType === 'percentage' ? 'Pourcentage (%)' : 'Montant (DH)'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max={discountType === 'percentage' ? 100 : undefined}
+                  step="0.01"
+                  value={discountValue || ''}
+                  onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)}
+                  className="w-full h-9 px-3 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder={discountType === 'percentage' ? '10' : '50'}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Libellé (optionnel)</label>
+                <input
+                  type="text"
+                  value={discountLabel}
+                  onChange={e => setDiscountLabel(e.target.value)}
+                  className="w-full h-9 px-3 rounded-md border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  placeholder="Remise fidélité…"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
       {/* ── RÉCAPITULATIF ── */}
       <Card className="p-5 bg-blue-50 border-blue-100">
         <h3 className="font-semibold text-gray-900 mb-3">Récapitulatif</h3>
@@ -543,6 +636,12 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
             <span>Sous-total ({items.length} article{items.length > 1 ? 's' : ''})</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-green-600 font-medium">
+              <span>{discountLabel || (discountType === 'percentage' ? `Remise ${discountValue}%` : 'Remise')}</span>
+              <span>− {formatCurrency(discountAmount)}</span>
+            </div>
+          )}
           {applyTax && (
             <div className="flex justify-between text-gray-600">
               <span>TVA ({taxRate}%)</span>
