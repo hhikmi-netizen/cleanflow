@@ -66,11 +66,16 @@ export default async function InvoicePage({ params }: { params: { id: string } }
           {pressing?.ice && <p className="text-xs text-gray-400 mt-1">ICE: {pressing.ice}</p>}
         </div>
 
-        {/* Titre bon de commande */}
+        {/* Titre facture */}
         <div className="flex justify-between items-start mb-5">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">BON DE COMMANDE</h2>
-            <p className="text-sm font-mono text-gray-600 mt-0.5">{order.order_number}</p>
+            <h2 className="text-lg font-bold text-gray-900">
+              {order.clients?.client_type === 'business' ? 'FACTURE' : 'BON DE COMMANDE'}
+            </h2>
+            {(order as any).invoice_number && (
+              <p className="text-sm font-mono text-blue-700 mt-0.5">{(order as any).invoice_number}</p>
+            )}
+            <p className="text-xs font-mono text-gray-400 mt-0.5">Réf. {order.order_number}</p>
           </div>
           <div className="text-right">
             <p className="text-sm text-gray-500">Date : {formatDate(order.created_at)}</p>
@@ -127,6 +132,16 @@ export default async function InvoicePage({ params }: { params: { id: string } }
             <span>Sous-total</span>
             <span>{formatCurrency(order.subtotal, pressing?.currency)}</span>
           </div>
+          {Number((order as any).discount_amount) > 0 && (
+            <div className="flex justify-between text-sm text-green-700">
+              <span>
+                Remise
+                {(order as any).discount_label ? ` — ${(order as any).discount_label}` : ''}
+                {(order as any).discount_type === 'percentage' ? ` (${(order as any).discount_value}%)` : ''}
+              </span>
+              <span>− {formatCurrency((order as any).discount_amount, pressing?.currency)}</span>
+            </div>
+          )}
           {Number(order.tax) > 0 && (
             <div className="flex justify-between text-sm text-gray-600">
               <span>TVA ({pressing?.tax_rate}%)</span>

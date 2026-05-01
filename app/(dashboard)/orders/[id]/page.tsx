@@ -9,6 +9,7 @@ import PaymentHistory from '@/components/orders/PaymentHistory'
 import OrderTicket from '@/components/orders/OrderTicket'
 import ArticleStatusPanel from '@/components/orders/ArticleStatusPanel'
 import WhatsAppNotifications from '@/components/orders/WhatsAppNotifications'
+import ArticleLabels from '@/components/orders/ArticleLabels'
 import { formatCurrency, formatDate, formatDateTime, getPaymentLabel, buildWhatsAppUrl, buildGoogleMapsUrl } from '@/lib/utils'
 import Link from 'next/link'
 import { ChevronLeft, MapPin, Phone, MessageCircle, AlertTriangle } from 'lucide-react'
@@ -86,14 +87,26 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       {/* Actions statut */}
       <OrderActions orderId={order.id} currentStatus={order.status} paid={order.paid} />
 
-      {/* Signaler un problème */}
-      <div className="flex justify-end">
-        <Link href={`/incidents/new?orderId=${order.id}&clientId=${order.clients?.id || ''}&orderNumber=${order.order_number}`}>
-          <button className="flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-700 hover:bg-orange-50 px-3 py-1.5 rounded-lg transition-colors">
-            <AlertTriangle size={13} />
-            Signaler un problème
-          </button>
-        </Link>
+      {/* Actions secondaires */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <ArticleLabels
+          items={(order.order_items || []) as any[]}
+          orderNumber={order.order_number}
+          pressingName={pressing?.name || 'Pressing'}
+          trackingToken={order.tracking_token}
+        />
+        <div className="flex items-center gap-2">
+          <Link href={`/orders/${order.id}/invoice`}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors border border-gray-200">
+            Facture / Bon
+          </Link>
+          <Link href={`/incidents/new?orderId=${order.id}&clientId=${order.clients?.id || ''}&orderNumber=${order.order_number}`}>
+            <button className="flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-700 hover:bg-orange-50 px-3 py-1.5 rounded-lg transition-colors">
+              <AlertTriangle size={13} />
+              Signaler un problème
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Client */}
