@@ -1,10 +1,12 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdmin } from '@/lib/auth/guards'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import PricingManager from '@/components/pricing/PricingManager'
 
 export default async function PricingPage() {
+  await requireAdmin()
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()

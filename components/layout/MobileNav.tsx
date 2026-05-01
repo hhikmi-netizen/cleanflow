@@ -3,29 +3,49 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet } from 'lucide-react'
+import {
+  Menu, X, Home, ShoppingBag, Users, Package, Settings, LogOut,
+  AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet,
+  Monitor, Landmark, MapPin, Bell, ShieldAlert,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-const navItems = [
-  { href: '/dashboard',  label: 'Dashboard',  icon: Home },
-  { href: '/orders',     label: 'Commandes',   icon: ShoppingBag },
-  { href: '/express',    label: 'Dépôt express', icon: Zap },
-  { href: '/clients',    label: 'Clients',     icon: Users },
-  { href: '/services',   label: 'Catalogue',   icon: Package },
-  { href: '/incidents',  label: 'SAV',         icon: AlertTriangle },
-  { href: '/livraisons', label: 'Livraisons',   icon: Truck },
-  { href: '/caisse',     label: 'Caisse',       icon: Wallet },
-  { href: '/stats',      label: 'Statistiques', icon: BarChart2 },
-  { href: '/pricing',    label: 'Tarification', icon: Tag },
-  { href: '/team',       label: 'Équipe',      icon: UserCog },
-  { href: '/settings',   label: 'Paramètres',  icon: Settings },
+const employeeNavItems = [
+  { href: '/quick-sale',         label: 'Caisse rapide', icon: Monitor    },
+  { href: '/orders',             label: 'Commandes',     icon: ShoppingBag },
+  { href: '/clients',            label: 'Clients',       icon: Users      },
+  { href: '/livraisons',         label: 'Livraisons',    icon: Truck      },
 ]
 
-export default function MobileNav() {
-  const [open, setOpen] = useState(false)
+const adminOnlyNavItems = [
+  { href: '/dashboard',          label: 'Dashboard',     icon: Home          },
+  { href: '/express',            label: 'Dépôt express', icon: Zap           },
+  { href: '/services',           label: 'Catalogue',     icon: Package       },
+  { href: '/incidents',          label: 'SAV',           icon: AlertTriangle },
+  { href: '/reminders',          label: 'Rappels WA',    icon: Bell          },
+  { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin        },
+  { href: '/caisse',             label: 'Caisse',        icon: Wallet        },
+  { href: '/credit',             label: 'Impayés',       icon: Landmark      },
+  { href: '/stats',              label: 'Statistiques',  icon: BarChart2     },
+  { href: '/pricing',            label: 'Tarification',  icon: Tag           },
+  { href: '/team',               label: 'Équipe',        icon: UserCog       },
+  { href: '/settings',           label: 'Paramètres',    icon: Settings      },
+]
+
+interface MobileNavProps {
+  role?: 'admin' | 'employee'
+}
+
+export default function MobileNav({ role = 'employee' }: MobileNavProps) {
+  const [open, setOpen]  = useState(false)
+  const isAdmin          = role === 'admin'
+  const navItems         = isAdmin
+    ? [...employeeNavItems, ...adminOnlyNavItems]
+    : employeeNavItems
+
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
   const supabase = createClient()
 
   const handleLogout = async () => {
@@ -45,14 +65,24 @@ export default function MobileNav() {
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col shadow-xl">
             <div className="flex items-center justify-between p-5 border-b">
-              <span className="text-xl font-bold text-blue-600">CleanFlow</span>
+              <div>
+                <span className="text-xl font-bold text-blue-600">CleanFlow</span>
+                {!isAdmin && (
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <ShieldAlert size={10} className="text-amber-500" />
+                    <span className="text-xs text-amber-600 font-medium">Mode Employé</span>
+                  </div>
+                )}
+              </div>
               <button onClick={() => setOpen(false)} className="p-2 rounded-md hover:bg-gray-100">
                 <X size={20} />
               </button>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-1">
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
               {navItems.map((item) => {
-                const isActive = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href)
+                const isActive = item.href === '/dashboard'
+                  ? pathname === '/dashboard'
+                  : pathname.startsWith(item.href)
                 const Icon = item.icon
                 return (
                   <Link

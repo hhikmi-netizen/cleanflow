@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdmin } from '@/lib/auth/guards'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -17,6 +18,8 @@ function pctChange(curr: number, prev: number) {
 }
 
 export default async function StatsPage() {
+  await requireAdmin()
+
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()

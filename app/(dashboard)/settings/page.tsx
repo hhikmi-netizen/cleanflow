@@ -1,10 +1,13 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdmin } from '@/lib/auth/guards'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import SettingsForm from '@/components/settings/SettingsForm'
 
 export default async function SettingsPage() {
+  await requireAdmin()
+
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()

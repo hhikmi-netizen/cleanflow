@@ -12,23 +12,28 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import ModeSwitch from '@/components/ui/ModeSwitch'
 
-const allNavItems = [
-  { href: '/dashboard',          label: 'Dashboard',     icon: Home,          adminOnly: false },
-  { href: '/orders',             label: 'Commandes',     icon: ShoppingBag,   adminOnly: false },
-  { href: '/express',            label: 'Dépôt express', icon: Zap,           adminOnly: false },
-  { href: '/clients',            label: 'Clients',       icon: Users,         adminOnly: false },
-  { href: '/services',           label: 'Catalogue',     icon: Package,       adminOnly: false },
-  { href: '/incidents',          label: 'SAV',           icon: AlertTriangle, adminOnly: false },
-  { href: '/reminders',          label: 'Rappels WA',    icon: Bell,          adminOnly: false },
-  { href: '/livraisons',         label: 'Livraisons',    icon: Truck,         adminOnly: false },
-  { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin,        adminOnly: false },
-  { href: '/caisse',             label: 'Caisse',        icon: Wallet,        adminOnly: false },
-  { href: '/quick-sale',         label: 'Caisse rapide', icon: Monitor,       adminOnly: false },
-  { href: '/credit',             label: 'Impayés',       icon: Landmark,      adminOnly: false },
-  { href: '/stats',              label: 'Statistiques',  icon: BarChart2,     adminOnly: true  },
-  { href: '/pricing',            label: 'Tarification',  icon: Tag,           adminOnly: true  },
-  { href: '/team',               label: 'Équipe',        icon: UserCog,       adminOnly: true  },
-  { href: '/settings',           label: 'Paramètres',    icon: Settings,      adminOnly: true  },
+// Items visibles par les admins ET les employés
+const employeeNavItems = [
+  { href: '/quick-sale',         label: 'Caisse rapide', icon: Monitor  },
+  { href: '/orders',             label: 'Commandes',     icon: ShoppingBag },
+  { href: '/clients',            label: 'Clients',       icon: Users    },
+  { href: '/livraisons',         label: 'Livraisons',    icon: Truck    },
+]
+
+// Items visibles uniquement par les admins
+const adminOnlyNavItems = [
+  { href: '/dashboard',          label: 'Dashboard',     icon: Home          },
+  { href: '/express',            label: 'Dépôt express', icon: Zap           },
+  { href: '/services',           label: 'Catalogue',     icon: Package       },
+  { href: '/incidents',          label: 'SAV',           icon: AlertTriangle },
+  { href: '/reminders',          label: 'Rappels WA',    icon: Bell          },
+  { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin        },
+  { href: '/caisse',             label: 'Caisse',        icon: Wallet        },
+  { href: '/credit',             label: 'Impayés',       icon: Landmark      },
+  { href: '/stats',              label: 'Statistiques',  icon: BarChart2     },
+  { href: '/pricing',            label: 'Tarification',  icon: Tag           },
+  { href: '/team',               label: 'Équipe',        icon: UserCog       },
+  { href: '/settings',           label: 'Paramètres',    icon: Settings      },
 ]
 
 interface SidebarProps {
@@ -36,11 +41,13 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ role = 'employee' }: SidebarProps) {
-  const isAdmin = role === 'admin'
-  const navItems = allNavItems.filter(item => isAdmin || !item.adminOnly)
+  const isAdmin  = role === 'admin'
+  const navItems = isAdmin
+    ? [...employeeNavItems, ...adminOnlyNavItems]
+    : employeeNavItems
 
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
   const supabase = createClient()
 
   const handleLogout = async () => {
@@ -95,9 +102,11 @@ export default function Sidebar({ role = 'employee' }: SidebarProps) {
           <Plus size={16} />
           Nouvelle commande
         </Link>
-        <div className="flex justify-center py-1">
-          <ModeSwitch />
-        </div>
+        {isAdmin && (
+          <div className="flex justify-center py-1">
+            <ModeSwitch />
+          </div>
+        )}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full"

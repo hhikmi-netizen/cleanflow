@@ -1,11 +1,14 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdmin } from '@/lib/auth/guards'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getClientsWithBalance } from '@/app/actions/credit'
 import CreditDashboard from '@/components/credit/CreditDashboard'
 
 export default async function CreditPage() {
+  await requireAdmin()
+
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()

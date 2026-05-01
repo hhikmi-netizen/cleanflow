@@ -1,11 +1,14 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdmin } from '@/lib/auth/guards'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import TeamManager from '@/components/team/TeamManager'
 import { Users } from 'lucide-react'
 
 export default async function TeamPage() {
+  await requireAdmin()
+
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()

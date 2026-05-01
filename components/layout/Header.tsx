@@ -5,22 +5,28 @@ import MobileNav from './MobileNav'
 import GlobalSearch from './GlobalSearch'
 
 const pageTitles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/orders': 'Commandes',
+  '/dashboard':  'Dashboard',
+  '/orders':     'Commandes',
   '/orders/new': 'Nouvelle commande',
-  '/clients': 'Clients',
-  '/services': 'Catalogue',
-  '/incidents': 'SAV',
-  '/express': 'Dépôt express',
+  '/quick-sale': 'Caisse rapide',
+  '/clients':    'Clients',
+  '/services':   'Catalogue',
+  '/incidents':  'SAV',
+  '/express':    'Dépôt express',
   '/livraisons': 'Livraisons',
-  '/caisse':  'Caisse',
-  '/stats':   'Statistiques',
-  '/team':    'Équipe',
-  '/settings': 'Paramètres',
+  '/caisse':     'Caisse',
+  '/stats':      'Statistiques',
+  '/team':       'Équipe',
+  '/settings':   'Paramètres',
   '/onboarding': 'Configuration',
+  '/forbidden':  'Accès refusé',
 }
 
-export default function Header() {
+interface HeaderProps {
+  role?: 'admin' | 'employee'
+}
+
+export default function Header({ role = 'employee' }: HeaderProps) {
   const pathname = usePathname()
 
   const title = Object.entries(pageTitles).find(([path]) =>
@@ -30,7 +36,7 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center gap-4">
       <div className="flex items-center gap-3 shrink-0">
-        <MobileNav />
+        <MobileNav role={role} />
         <h2 className="text-base font-semibold text-gray-900 hidden sm:block">{title}</h2>
       </div>
       <div className="flex-1">

@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import { requireAdmin } from '@/lib/auth/guards'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { formatCurrency, formatDate } from '@/lib/utils'
@@ -30,6 +31,8 @@ const PAYMENT_TERMS_LABELS: Record<string, string> = {
 }
 
 export default async function BillingDocPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin()
+
   const { id } = await params
   const supabase = await createServerClient()
 
