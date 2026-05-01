@@ -16,6 +16,7 @@ const pageTitles: Record<string, string> = {
   '/livraisons': 'Livraisons',
   '/caisse':     'Caisse',
   '/stats':      'Statistiques',
+  '/exports':    'Exports CSV',
   '/team':       'Équipe',
   '/settings':   'Paramètres',
   '/onboarding': 'Configuration',

@@ -9,7 +9,7 @@ import RevenueChart from '@/components/stats/RevenueChart'
 import StatusDonut from '@/components/stats/StatusDonut'
 import TopServicesChart from '@/components/stats/TopServicesChart'
 import StatsExportButton from '@/components/stats/StatsExportButton'
-import { TrendingUp, ShoppingBag, Users, ArrowUp, ArrowDown, Minus, Clock } from 'lucide-react'
+import { TrendingUp, ShoppingBag, Users, ArrowUp, ArrowDown, Minus, Clock, Download } from 'lucide-react'
 import Link from 'next/link'
 
 function pctChange(curr: number, prev: number) {
@@ -167,11 +167,20 @@ export default async function StatsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Statistiques</h1>
           <p className="text-sm text-gray-500 mt-1">Mois en cours · comparaison mois précédent</p>
         </div>
-        <StatsExportButton
-          revenueData={revenueChartData}
-          topServices={topServices}
-          topClients={topClients}
-        />
+        <div className="flex items-center gap-2">
+          <Link
+            href="/exports"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <Download size={15} />
+            <span className="hidden sm:inline">Exports CSV</span>
+          </Link>
+          <StatsExportButton
+            revenueData={revenueChartData}
+            topServices={topServices}
+            topClients={topClients}
+          />
+        </div>
       </div>
 
       {/* KPIs */}
