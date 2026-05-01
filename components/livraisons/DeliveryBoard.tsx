@@ -51,7 +51,11 @@ interface DeliveryOrder {
   deposit_mode: string
   delivery_mode: string
   pickup_address?: string | null
+  pickup_latitude?: number | null
+  pickup_longitude?: number | null
   delivery_address?: string | null
+  delivery_latitude?: number | null
+  delivery_longitude?: number | null
   pickup_slot?: string | null
   delivery_slot?: string | null
   assigned_to?: string | null
@@ -217,6 +221,8 @@ export default function DeliveryBoard({ orders, teamMembers, waConfig }: Props) 
               const isDelivery = order.delivery_mode === 'delivery'
               const isPickup   = order.deposit_mode === 'pickup'
               const address    = isDelivery ? (order.delivery_address || order.clients?.address) : order.pickup_address
+              const addrLat    = isDelivery ? order.delivery_latitude : order.pickup_latitude
+              const addrLng    = isDelivery ? order.delivery_longitude : order.pickup_longitude
               const slot       = isDelivery ? order.delivery_slot : order.pickup_slot
               const timePart   = slot?.includes(' ') ? slot.split(' ').slice(1).join(' ') : null
               const dsLabel    = DELIVERY_STATUS_LABELS[order.delivery_status || 'pending']
@@ -267,7 +273,11 @@ export default function DeliveryBoard({ orders, teamMembers, waConfig }: Props) 
                     )}
                     {address && (
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                        href={
+                          addrLat && addrLng
+                            ? `https://www.google.com/maps?q=${addrLat},${addrLng}`
+                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+                        }
                         target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1 hover:text-blue-600 max-w-[200px] truncate"
                       >

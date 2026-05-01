@@ -37,6 +37,11 @@ export interface Client {
   phone: string
   email?: string
   address?: string
+  city?: string
+  district?: string
+  latitude?: number | null
+  longitude?: number | null
+  google_place_id?: string | null
   client_type: ClientType
   ice?: string
   notes?: string
@@ -90,6 +95,10 @@ export interface Order {
   notes?: string
   pickup_address?: string | null
   delivery_address?: string | null
+  pickup_latitude?: number | null
+  pickup_longitude?: number | null
+  delivery_latitude?: number | null
+  delivery_longitude?: number | null
   pickup_slot?: string | null
   delivery_slot?: string | null
   assigned_to?: string | null

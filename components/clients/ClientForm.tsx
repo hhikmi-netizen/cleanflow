@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Client } from '@/lib/types'
+import AddressAutocomplete, { PlaceData } from '@/components/shared/AddressAutocomplete'
 
 interface ClientFormProps {
   pressingId: string
@@ -22,6 +23,11 @@ export default function ClientForm({ pressingId, client, onSuccess }: ClientForm
   const [phone, setPhone] = useState(client?.phone || '')
   const [email, setEmail] = useState(client?.email || '')
   const [address, setAddress] = useState(client?.address || '')
+  const [city, setCity] = useState(client?.city || '')
+  const [district, setDistrict] = useState(client?.district || '')
+  const [latitude, setLatitude] = useState<number | null>(client?.latitude ?? null)
+  const [longitude, setLongitude] = useState<number | null>(client?.longitude ?? null)
+  const [googlePlaceId, setGooglePlaceId] = useState<string | null>(client?.google_place_id ?? null)
   const [clientType, setClientType] = useState<'individual' | 'business'>(client?.client_type || 'individual')
   const [ice, setIce] = useState(client?.ice || '')
   const [creditLimit, setCreditLimit] = useState(client?.credit_limit ? String(client.credit_limit) : '')
@@ -38,6 +44,11 @@ export default function ClientForm({ pressingId, client, onSuccess }: ClientForm
       pressing_id: pressingId,
       name, phone, email: email || null,
       address: address || null,
+      city: city || null,
+      district: district || null,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      google_place_id: googlePlaceId ?? null,
       client_type: clientType,
       ice: ice || null,
       credit_limit: creditLimit ? parseFloat(creditLimit) : null,
@@ -107,7 +118,22 @@ export default function ClientForm({ pressingId, client, onSuccess }: ClientForm
         </div>
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="address">Adresse</Label>
-          <Input id="address" value={address} onChange={e => setAddress(e.target.value)} className="h-11" placeholder="123 Rue Mohammed V, Casablanca" />
+          <AddressAutocomplete
+            id="address"
+            value={address}
+            onChange={(val, place?: PlaceData) => {
+              setAddress(val)
+              if (place) {
+                setCity(place.city)
+                setDistrict(place.district)
+                setLatitude(place.latitude)
+                setLongitude(place.longitude)
+                setGooglePlaceId(place.google_place_id)
+              }
+            }}
+            placeholder="123 Rue Mohammed V, Casablanca"
+            className="h-11"
+          />
         </div>
         {clientType === 'business' && (
           <>

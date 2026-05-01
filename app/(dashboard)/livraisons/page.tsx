@@ -20,7 +20,7 @@ export default async function LivraisonsPage() {
   const [{ data: orders }, { data: teamMembers }, { data: pressing }, { data: waSettings }] = await Promise.all([
     supabase
       .from('orders')
-      .select('id, order_number, status, deposit_mode, delivery_mode, pickup_address, delivery_address, pickup_slot, delivery_slot, assigned_to, delivery_status, created_at, clients(id, name, phone, address)')
+      .select('id, order_number, status, deposit_mode, delivery_mode, pickup_address, pickup_latitude, pickup_longitude, delivery_address, delivery_latitude, delivery_longitude, pickup_slot, delivery_slot, assigned_to, delivery_status, created_at, clients(id, name, phone, address)')
       .eq('pressing_id', pid)
       .or('deposit_mode.eq.pickup,delivery_mode.eq.delivery')
       .not('status', 'in', '("delivered","cancelled")')

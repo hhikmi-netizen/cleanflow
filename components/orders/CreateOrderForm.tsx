@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { Loader2, Plus, Trash2, Search, UserPlus, X, Star, RefreshCw, MapPin, Clock, Tag, AlertTriangle } from 'lucide-react'
 import { Client, Service } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
+import AddressAutocomplete, { PlaceData } from '@/components/shared/AddressAutocomplete'
 import { adjustLoyaltyPoints } from '@/app/actions/loyalty'
 import { useSubscriptionOnOrder } from '@/app/actions/pricing'
 import { resolvePrice, ApplicablePriceRule, RULE_TYPE_LABELS, RULE_TYPE_COLORS, PriceContext } from '@/lib/priceEngine'
@@ -55,8 +56,12 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [deliveryMode, setDeliveryMode] = useState<'on_site' | 'delivery'>('on_site')
   const [pickupDate, setPickupDate] = useState('')
   const [pickupAddress, setPickupAddress] = useState('')
+  const [pickupLatitude, setPickupLatitude] = useState<number | null>(null)
+  const [pickupLongitude, setPickupLongitude] = useState<number | null>(null)
   const [pickupSlotTime, setPickupSlotTime] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryLatitude, setDeliveryLatitude] = useState<number | null>(null)
+  const [deliveryLongitude, setDeliveryLongitude] = useState<number | null>(null)
   const [deliverySlotDate, setDeliverySlotDate] = useState('')
   const [deliverySlotTime, setDeliverySlotTime] = useState('')
   const [notes, setNotes] = useState('')
@@ -411,7 +416,11 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           delivery_mode: deliveryMode,
           pickup_date: pickupDate || null,
           pickup_address: depositMode === 'pickup' ? (pickupAddress || null) : null,
+          pickup_latitude: depositMode === 'pickup' ? (pickupLatitude ?? null) : null,
+          pickup_longitude: depositMode === 'pickup' ? (pickupLongitude ?? null) : null,
           delivery_address: deliveryMode === 'delivery' ? (deliveryAddress || null) : null,
+          delivery_latitude: deliveryMode === 'delivery' ? (deliveryLatitude ?? null) : null,
+          delivery_longitude: deliveryMode === 'delivery' ? (deliveryLongitude ?? null) : null,
           pickup_slot: pickupSlot,
           delivery_slot: delivSlot,
           delivery_status: (depositMode === 'pickup' || deliveryMode === 'delivery') ? 'pending' : null,
@@ -759,8 +768,15 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
             <>
               <div className="sm:col-span-2 space-y-2">
                 <Label className="flex items-center gap-1.5"><MapPin size={13} className="text-purple-500" />Adresse de collecte</Label>
-                <Input value={pickupAddress} onChange={e => setPickupAddress(e.target.value)}
-                  placeholder={selectedClient?.address || 'Adresse de collecte…'} className="h-10" />
+                <AddressAutocomplete
+                  value={pickupAddress}
+                  onChange={(val, place?: PlaceData) => {
+                    setPickupAddress(val)
+                    if (place) { setPickupLatitude(place.latitude); setPickupLongitude(place.longitude) }
+                  }}
+                  placeholder={selectedClient?.address || 'Adresse de collecte…'}
+                  className="h-10"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5"><Clock size={13} className="text-purple-500" />Créneau collecte</Label>
@@ -774,8 +790,15 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
             <>
               <div className="sm:col-span-2 space-y-2">
                 <Label className="flex items-center gap-1.5"><MapPin size={13} className="text-blue-500" />Adresse de livraison</Label>
-                <Input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)}
-                  placeholder={selectedClient?.address || 'Adresse de livraison…'} className="h-10" />
+                <AddressAutocomplete
+                  value={deliveryAddress}
+                  onChange={(val, place?: PlaceData) => {
+                    setDeliveryAddress(val)
+                    if (place) { setDeliveryLatitude(place.latitude); setDeliveryLongitude(place.longitude) }
+                  }}
+                  placeholder={selectedClient?.address || 'Adresse de livraison…'}
+                  className="h-10"
+                />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5"><Clock size={13} className="text-blue-500" />Date livraison</Label>

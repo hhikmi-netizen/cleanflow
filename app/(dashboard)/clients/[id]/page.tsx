@@ -6,9 +6,10 @@ import { Card } from '@/components/ui/card'
 import ClientEditSection from '@/components/clients/ClientEditSection'
 import LoyaltyWidget from '@/components/clients/LoyaltyWidget'
 import OrderStatusBadge from '@/components/orders/OrderStatusBadge'
+import MiniMap from '@/components/shared/MiniMap'
 import {
   formatCurrency, formatDate,
-  buildGoogleMapsUrl, buildWhatsAppUrl,
+  buildWhatsAppUrl,
   getIncidentStatusLabel, getIncidentStatusColor,
 } from '@/lib/utils'
 import Link from 'next/link'
@@ -136,7 +137,12 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <MessageCircle size={16} />
           </a>
           {client.address && (
-            <a href={buildGoogleMapsUrl(client.address)}
+            <a
+              href={
+                client.latitude && client.longitude
+                  ? `https://www.google.com/maps?q=${client.latitude},${client.longitude}`
+                  : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}`
+              }
               target="_blank" rel="noopener noreferrer"
               className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors">
               <MapPin size={16} />
@@ -217,6 +223,9 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
             <div className="col-span-2">
               <p className="text-gray-400">Adresse</p>
               <p className="font-medium text-gray-900">{client.address}</p>
+              {client.city && (
+                <p className="text-xs text-gray-400 mt-0.5">{[client.district, client.city].filter(Boolean).join(', ')}</p>
+              )}
             </div>
           )}
           {client.ice && (
@@ -244,6 +253,15 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         )}
         <ClientEditSection client={client} pressingId={userData!.pressing_id} />
       </Card>
+
+      {/* Mini map */}
+      {client.latitude && client.longitude && (
+        <MiniMap
+          latitude={client.latitude}
+          longitude={client.longitude}
+          label={client.name}
+        />
+      )}
 
       {/* Active subscriptions */}
       {activeSubscriptions && activeSubscriptions.length > 0 && (
