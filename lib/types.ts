@@ -138,8 +138,25 @@ export interface Settings {
   whatsapp_phone?: string
   auto_notify_ready: boolean
   invoice_footer?: string
+  loyalty_enabled: boolean
+  points_per_dh: number
+  points_value_dh: number
+  points_redemption_min: number
   created_at: string
   updated_at: string
+}
+
+export type LoyaltyTransactionType = 'earned' | 'redeemed' | 'adjustment'
+
+export interface LoyaltyTransaction {
+  id: string
+  pressing_id: string
+  client_id: string
+  order_id?: string
+  type: LoyaltyTransactionType
+  points: number
+  note?: string
+  created_at: string
 }
 
 export type IncidentType = 'damage' | 'loss' | 'delay' | 'quality' | 'wrong_item' | 'other'

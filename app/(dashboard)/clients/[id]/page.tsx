@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import ClientEditSection from '@/components/clients/ClientEditSection'
+import LoyaltyWidget from '@/components/clients/LoyaltyWidget'
 import OrderStatusBadge from '@/components/orders/OrderStatusBadge'
 import {
   formatCurrency, formatDate,
@@ -54,6 +55,23 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     .select('*, subscriptions(name, sub_type, price, credits, quota_quantity, quota_kilo)')
     .eq('client_id', client.id)
     .eq('status', 'active')
+
+  // Loyalty transactions + settings
+  const [loyaltyRes, settingsRes] = await Promise.all([
+    supabase
+      .from('loyalty_transactions')
+      .select('id, type, points, note, created_at, order_id')
+      .eq('client_id', client.id)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('settings')
+      .select('loyalty_enabled, points_value_dh, points_redemption_min')
+      .eq('pressing_id', userData!.pressing_id)
+      .single(),
+  ])
+  const loyaltyTxs = loyaltyRes.data || []
+  const loyaltySettings = settingsRes.data
 
   // Incidents for this client
   const { data: incidents } = await supabase
@@ -158,6 +176,22 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           </p>
         </Card>
       </div>
+
+      {/* Fidélité */}
+      {loyaltySettings?.loyalty_enabled && (
+        <Card className="p-4">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Star size={13} className="text-yellow-500 fill-yellow-400" /> Fidélité
+          </h3>
+          <LoyaltyWidget
+            clientId={client.id}
+            loyaltyPoints={(client as any).loyalty_points || 0}
+            pointsValueDh={Number(loyaltySettings.points_value_dh) || 0.1}
+            redemptionMin={loyaltySettings.points_redemption_min || 50}
+            transactions={loyaltyTxs}
+          />
+        </Card>
+      )}
 
       {/* Client info */}
       <Card className="p-5">

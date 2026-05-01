@@ -85,7 +85,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       </div>
 
       {/* Actions statut */}
-      <OrderActions orderId={order.id} currentStatus={order.status} paid={order.paid} />
+      <OrderActions orderId={order.id} currentStatus={order.status} paid={order.paid} clientId={order.clients?.id} />
 
       {/* Actions secondaires */}
       <div className="flex items-center justify-between flex-wrap gap-2">

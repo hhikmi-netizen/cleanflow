@@ -5,14 +5,16 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Loader2, FileText, Receipt, XCircle, X } from 'lucide-react'
+import { Loader2, FileText, Receipt, XCircle, X, Star } from 'lucide-react'
 import { OrderStatus } from '@/lib/types'
 import Link from 'next/link'
+import { awardOrderPoints } from '@/app/actions/loyalty'
 
 interface OrderActionsProps {
   orderId: string
   currentStatus: OrderStatus
   paid: boolean
+  clientId?: string
 }
 
 const statusFlow: Record<OrderStatus, { label: string; next: OrderStatus; color: string } | null> = {
@@ -23,7 +25,7 @@ const statusFlow: Record<OrderStatus, { label: string; next: OrderStatus; color:
   cancelled:   null,
 }
 
-export default function OrderActions({ orderId, currentStatus, paid }: OrderActionsProps) {
+export default function OrderActions({ orderId, currentStatus, paid, clientId }: OrderActionsProps) {
   const [loading, setLoading] = useState(false)
   const [paidLoading, setPaidLoading] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
@@ -45,6 +47,12 @@ export default function OrderActions({ orderId, currentStatus, paid }: OrderActi
       toast.error('Erreur lors de la mise à jour')
     } else {
       toast.success('Statut mis à jour')
+      if (newStatus === 'delivered' && clientId) {
+        const result = await awardOrderPoints(orderId)
+        if (result && result.points > 0) {
+          toast.success(`+${result.points} points fidélité accordés`, { icon: '⭐' })
+        }
+      }
       router.refresh()
     }
     setLoading(false)

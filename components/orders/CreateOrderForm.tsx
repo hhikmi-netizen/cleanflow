@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Search, UserPlus, X } from 'lucide-react'
+import { Loader2, Plus, Trash2, Search, UserPlus, X, Star } from 'lucide-react'
 import { Client, Service } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
+import { adjustLoyaltyPoints } from '@/app/actions/loyalty'
 
 interface OrderItem {
   service_id: string
@@ -58,6 +59,14 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [discountLabel, setDiscountLabel] = useState('')
   const [availableDiscounts, setAvailableDiscounts] = useState<{ id: string; name: string; discount_type: string; value: number }[]>([])
 
+  // Loyalty
+  const [clientLoyaltyPoints, setClientLoyaltyPoints] = useState(0)
+  const [pointsValueDh, setPointsValueDh] = useState(0.1)
+  const [redemptionMin, setRedemptionMin] = useState(50)
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false)
+  const [redeemPoints, setRedeemPoints] = useState(false)
+  const [pointsToRedeem, setPointsToRedeem] = useState(0)
+
   // Quick client creation
   const [showNewClientForm, setShowNewClientForm] = useState(false)
   const [newClientName, setNewClientName] = useState('')
@@ -75,6 +84,24 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
     supabase.from('discount_rules').select('id, name, discount_type, value').eq('active', true)
       .then(({ data }) => { if (data) setAvailableDiscounts(data) })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load loyalty data when client changes
+  useEffect(() => {
+    if (!clientId) { setClientLoyaltyPoints(0); setRedeemPoints(false); setPointsToRedeem(0); return }
+    Promise.all([
+      supabase.from('clients').select('loyalty_points').eq('id', clientId).single(),
+      supabase.from('settings').select('loyalty_enabled, points_value_dh, points_redemption_min').eq('pressing_id', pressingId).single(),
+    ]).then(([clientRes, settingsRes]) => {
+      setClientLoyaltyPoints((clientRes.data as any)?.loyalty_points || 0)
+      if (settingsRes.data) {
+        setLoyaltyEnabled(settingsRes.data.loyalty_enabled ?? true)
+        setPointsValueDh(Number(settingsRes.data.points_value_dh) || 0.1)
+        setRedemptionMin(settingsRes.data.points_redemption_min || 50)
+      }
+    })
+    setRedeemPoints(false)
+    setPointsToRedeem(0)
+  }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -196,11 +223,19 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   }
 
   const subtotal = items.reduce((sum, i) => sum + i.subtotal, 0)
-  const discountAmount = discountType === 'percentage'
-    ? subtotal * (discountValue / 100)
-    : discountType === 'fixed'
-      ? Math.min(discountValue, subtotal)
-      : 0
+  const loyaltyDiscountAmount = redeemPoints && pointsToRedeem > 0
+    ? Math.min(pointsToRedeem * pointsValueDh, subtotal)
+    : 0
+  const effectiveDiscountType = loyaltyDiscountAmount > 0 ? 'fixed' : discountType
+  const effectiveDiscountValue = loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : discountValue
+  const effectiveDiscountLabel = loyaltyDiscountAmount > 0 ? `Fidélité (${pointsToRedeem} pts)` : discountLabel
+  const discountAmount = loyaltyDiscountAmount > 0
+    ? loyaltyDiscountAmount
+    : discountType === 'percentage'
+      ? subtotal * (discountValue / 100)
+      : discountType === 'fixed'
+        ? Math.min(discountValue, subtotal)
+        : 0
   const discountedSubtotal = subtotal - discountAmount
   const tax = applyTax ? discountedSubtotal * (taxRate / 100) : 0
   const total = discountedSubtotal + tax
@@ -230,10 +265,10 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           notes: notes || null,
           status: 'pending',
           paid: false,
-          discount_type: discountType,
-          discount_value: discountValue,
-          discount_amount: discountAmount,
-          discount_label: discountLabel || null,
+          discount_type: effectiveDiscountType !== 'none' ? effectiveDiscountType : null,
+          discount_value: effectiveDiscountValue || null,
+          discount_amount: discountAmount || null,
+          discount_label: effectiveDiscountLabel || null,
         })
         .select()
         .single()
@@ -245,6 +280,11 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
         .insert(items.map(item => ({ ...item, order_id: order.id })))
 
       if (itemsError) throw itemsError
+
+      // Deduct loyalty points if redeemed
+      if (redeemPoints && pointsToRedeem > 0 && clientId) {
+        await adjustLoyaltyPoints(clientId, -pointsToRedeem, `Échange — commande ${order.order_number}`)
+      }
 
       toast.success(`Commande ${order.order_number} créée !`)
       router.push(`/orders/${order.id}`)
@@ -561,6 +601,54 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
       <Card className="p-5">
         <h3 className="font-semibold text-gray-900 mb-3">Remise</h3>
         <div className="space-y-3">
+          {/* Loyalty redemption */}
+          {loyaltyEnabled && clientId && clientLoyaltyPoints >= redemptionMin && (
+            <div className={`p-3 rounded-xl border transition-colors ${
+              redeemPoints ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200 bg-gray-50'
+            }`}>
+              <label className="flex items-center justify-between cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <Star size={14} className={redeemPoints ? 'text-yellow-500 fill-yellow-400' : 'text-gray-400'} />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      Utiliser les points fidélité
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {clientLoyaltyPoints} pts disponibles · valeur {(clientLoyaltyPoints * pointsValueDh).toFixed(2)} DH
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={redeemPoints}
+                  onChange={e => {
+                    setRedeemPoints(e.target.checked)
+                    if (e.target.checked) setPointsToRedeem(Math.min(clientLoyaltyPoints, Math.floor(subtotal / pointsValueDh)))
+                    else setPointsToRedeem(0)
+                  }}
+                  className="w-4 h-4 rounded text-yellow-500"
+                />
+              </label>
+              {redeemPoints && (
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="text-xs text-gray-500 shrink-0">Points à utiliser :</label>
+                  <input
+                    type="number"
+                    min={redemptionMin}
+                    max={Math.min(clientLoyaltyPoints, Math.ceil(subtotal / pointsValueDh))}
+                    step="1"
+                    value={pointsToRedeem || ''}
+                    onChange={e => setPointsToRedeem(Math.min(parseInt(e.target.value) || 0, clientLoyaltyPoints))}
+                    className="w-24 h-8 px-2 text-sm border border-yellow-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-yellow-400"
+                  />
+                  <span className="text-xs text-green-700 font-medium">
+                    = − {(pointsToRedeem * pointsValueDh).toFixed(2)} DH
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Quick-apply from saved discounts */}
           {availableDiscounts.length > 0 && (
             <div className="flex flex-wrap gap-2">

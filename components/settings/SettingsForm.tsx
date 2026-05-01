@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { Loader2, MessageCircle } from 'lucide-react'
+import { Loader2, MessageCircle, Star } from 'lucide-react'
 import { Pressing, Settings } from '@/lib/types'
 import { useRouter } from 'next/navigation'
 
@@ -33,6 +33,10 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
     whatsapp_phone: settings?.whatsapp_phone || '',
     auto_notify_ready: settings?.auto_notify_ready || true,
     invoice_footer: settings?.invoice_footer || 'Merci de votre confiance !',
+    loyalty_enabled: settings?.loyalty_enabled ?? true,
+    points_per_dh: settings?.points_per_dh ?? 1,
+    points_value_dh: settings?.points_value_dh ?? 0.10,
+    points_redemption_min: settings?.points_redemption_min ?? 50,
   })
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -153,6 +157,62 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
             <p className="font-medium mb-1">Comment ça marche :</p>
             <p>Un bouton WhatsApp est disponible sur chaque fiche commande pour envoyer un message rapide au client. L&apos;intégration automatique (Twilio) sera disponible prochainement.</p>
           </div>
+        </div>
+      </Card>
+
+      {/* Fidélité */}
+      <Card className="p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Star size={18} className="text-yellow-500" />
+          <h3 className="font-semibold text-gray-900">Programme fidélité</h3>
+        </div>
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settingsData.loyalty_enabled}
+              onChange={e => setSettingsData({ ...settingsData, loyalty_enabled: e.target.checked })}
+              className="w-4 h-4 rounded text-yellow-500"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Activer la carte fidélité</p>
+              <p className="text-xs text-gray-400">Les clients accumulent des points à chaque commande livrée</p>
+            </div>
+          </label>
+          {settingsData.loyalty_enabled && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <div className="space-y-2">
+                <Label>Points par DH dépensé</Label>
+                <Input
+                  type="number" min="0.1" step="0.1"
+                  value={settingsData.points_per_dh}
+                  onChange={e => setSettingsData({ ...settingsData, points_per_dh: parseFloat(e.target.value) || 1 })}
+                  className="h-10"
+                />
+                <p className="text-xs text-gray-400">Ex : 1 = 1 pt / DH</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Valeur d&apos;un point (DH)</Label>
+                <Input
+                  type="number" min="0.01" step="0.01"
+                  value={settingsData.points_value_dh}
+                  onChange={e => setSettingsData({ ...settingsData, points_value_dh: parseFloat(e.target.value) || 0.1 })}
+                  className="h-10"
+                />
+                <p className="text-xs text-gray-400">Ex : 0.10 = 100 pts → 10 DH</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Minimum pour utiliser</Label>
+                <Input
+                  type="number" min="1" step="1"
+                  value={settingsData.points_redemption_min}
+                  onChange={e => setSettingsData({ ...settingsData, points_redemption_min: parseInt(e.target.value) || 50 })}
+                  className="h-10"
+                />
+                <p className="text-xs text-gray-400">Points requis pour échanger</p>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
