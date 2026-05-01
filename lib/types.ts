@@ -92,6 +92,9 @@ export interface Order {
   order_items?: OrderItem[]
 }
 
+export type ItemStatus = 'received' | 'in_cleaning' | 'done' | 'ready' | 'issue'
+export type TextileType = 'chemise' | 'pantalon' | 'costume' | 'robe' | 'veste' | 'manteau' | 'linge' | 'autre'
+
 export interface OrderItem {
   id: string
   order_id: string
@@ -105,7 +108,27 @@ export interface OrderItem {
   color?: string
   brand?: string
   item_type?: string
+  item_status?: ItemStatus
+  textile_type?: TextileType | string
+  stain_noted?: boolean
+  stain_desc?: string
+  alteration_needed?: boolean
+  alteration_desc?: string
   created_at: string
+}
+
+export interface QualityCheck {
+  id: string
+  pressing_id: string
+  order_item_id: string
+  checked_by?: string
+  textile_type?: string
+  condition?: 'good' | 'fragile' | 'damaged' | 'stained'
+  stains?: string[]
+  alteration?: string
+  notes?: string
+  photo_url?: string
+  checked_at: string
 }
 
 export interface Settings {

@@ -118,3 +118,101 @@ export function getResolutionLabel(action: string): string {
   }
   return labels[action] || action
 }
+
+// ── Item status ───────────────────────────────────────────────────────────
+
+export function getItemStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    received:    'Reçu',
+    in_cleaning: 'En nettoyage',
+    done:        'Traité',
+    ready:       'Prêt',
+    issue:       'Problème',
+  }
+  return labels[status] || status
+}
+
+export function getItemStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    received:    'bg-gray-100 text-gray-700',
+    in_cleaning: 'bg-blue-100 text-blue-700',
+    done:        'bg-indigo-100 text-indigo-700',
+    ready:       'bg-green-100 text-green-800',
+    issue:       'bg-red-100 text-red-700',
+  }
+  return colors[status] || 'bg-gray-100 text-gray-700'
+}
+
+// ── WhatsApp notification templates ──────────────────────────────────────
+
+interface WaTemplateParams {
+  clientName: string
+  orderNumber: string
+  pressingName: string
+  pressingPhone?: string
+  total?: number
+  remaining?: number
+  trackingUrl?: string
+  pickupDate?: string
+}
+
+export function getWhatsAppTemplates(params: WaTemplateParams) {
+  const {
+    clientName, orderNumber, pressingName, pressingPhone,
+    total, remaining, trackingUrl, pickupDate,
+  } = params
+
+  const baseUrl = pressingPhone ? `https://wa.me/${pressingPhone.replace(/\D/g, '')}` : ''
+  const trackLine = trackingUrl ? `\nSuivi en ligne : ${trackingUrl}` : ''
+  const remainLine = remaining && remaining > 0 ? `\nReste à payer : ${remaining.toFixed(2)} DH` : ''
+  const pickupLine = pickupDate ? `\nRetrait prévu : ${pickupDate}` : ''
+
+  const templates = [
+    {
+      id: 'created',
+      label: 'Commande créée',
+      emoji: '📋',
+      message: `Bonjour ${clientName} 👋\n\nVotre commande *${orderNumber}* a bien été enregistrée chez *${pressingName}*.\n${total ? `Montant total : ${total.toFixed(2)} DH` : ''}${remainLine}${pickupLine}${trackLine}\n\nMerci de votre confiance !`,
+    },
+    {
+      id: 'in_progress',
+      label: 'En traitement',
+      emoji: '🔄',
+      message: `Bonjour ${clientName},\n\nVos articles (commande *${orderNumber}*) sont en cours de traitement chez *${pressingName}*.\nNous vous prévenons dès qu'ils sont prêts.${trackLine}`,
+    },
+    {
+      id: 'ready',
+      label: 'Commande prête',
+      emoji: '✅',
+      message: `Bonjour ${clientName} 🎉\n\nVotre commande *${orderNumber}* est *prête* ! Vous pouvez venir la récupérer chez *${pressingName}*.${remainLine}${pickupLine}${trackLine}\n\nÀ bientôt !`,
+    },
+    {
+      id: 'reminder',
+      label: 'Rappel retrait',
+      emoji: '⏰',
+      message: `Bonjour ${clientName},\n\nRappel : votre commande *${orderNumber}* vous attend chez *${pressingName}*.${remainLine}\n\nN'hésitez pas à nous contacter si vous avez besoin de reprogrammer.`,
+    },
+    {
+      id: 'delivery',
+      label: 'Livraison en route',
+      emoji: '🚚',
+      message: `Bonjour ${clientName},\n\nVotre commande *${orderNumber}* est en route ! Notre livreur arrive bientôt chez vous.${remainLine}\n\nCordialement, *${pressingName}*`,
+    },
+    {
+      id: 'delivered',
+      label: 'Commande livrée',
+      emoji: '📦',
+      message: `Bonjour ${clientName},\n\nVotre commande *${orderNumber}* a bien été livrée. Merci de votre confiance !\n\nÀ très bientôt chez *${pressingName}* 🙏`,
+    },
+  ]
+
+  return templates.map(t => ({
+    ...t,
+    url: `https://wa.me/${(pressingPhone || '').replace(/\D/g, '')}?text=` + encodeURIComponent(t.message),
+    clientUrl: buildWhatsAppUrl('', t.message), // will be overridden with real phone
+  }))
+}
+
+export function buildWhatsAppNotification(clientPhone: string, template: { message: string }) {
+  return buildWhatsAppUrl(clientPhone, template.message)
+}

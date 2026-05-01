@@ -7,6 +7,8 @@ import OrderStatusBadge from '@/components/orders/OrderStatusBadge'
 import OrderActions from '@/components/orders/OrderActions'
 import PaymentHistory from '@/components/orders/PaymentHistory'
 import OrderTicket from '@/components/orders/OrderTicket'
+import ArticleStatusPanel from '@/components/orders/ArticleStatusPanel'
+import WhatsAppNotifications from '@/components/orders/WhatsAppNotifications'
 import { formatCurrency, formatDate, formatDateTime, getPaymentLabel, buildWhatsAppUrl, buildGoogleMapsUrl } from '@/lib/utils'
 import Link from 'next/link'
 import { ChevronLeft, MapPin, Phone, MessageCircle, AlertTriangle } from 'lucide-react'
@@ -133,31 +135,10 @@ export default async function OrderDetailPage({ params }: { params: { id: string
       {/* Articles */}
       <Card className="p-4">
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Articles</h3>
-        <div className="space-y-2">
-          {order.order_items?.map((item: any) => (
-            <div key={item.id} className="py-2 border-b border-gray-50 last:border-0">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-gray-900">{item.service_name}</p>
-                    {item.article_code && (
-                      <span className="font-mono text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-                        {item.article_code}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">x{item.quantity} · {formatCurrency(item.unit_price)} / unité</p>
-                  {item.color && <p className="text-xs text-gray-400">Couleur : {item.color}</p>}
-                  {item.brand && <p className="text-xs text-gray-400">Marque : {item.brand}</p>}
-                </div>
-                <span className="text-sm font-semibold shrink-0 ml-3">{formatCurrency(item.subtotal)}</span>
-              </div>
-              {item.notes && (
-                <p className="mt-1 text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">{item.notes}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        <ArticleStatusPanel
+          items={(order.order_items || []) as any[]}
+          orderId={order.id}
+        />
         <div className="mt-4 pt-3 border-t border-gray-100 space-y-1">
           <div className="flex justify-between text-sm text-gray-500">
             <span>Sous-total</span>
@@ -187,6 +168,21 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           )}
         </div>
       </Card>
+
+      {/* Notifications WhatsApp */}
+      {order.clients?.phone && (
+        <WhatsAppNotifications
+          clientName={order.clients.name}
+          clientPhone={order.clients.phone}
+          orderNumber={order.order_number}
+          pressingName={pressing?.name || 'Pressing'}
+          pressingPhone={pressing?.phone}
+          total={Number(order.total)}
+          remaining={Math.max(0, Number(order.total) - Number(order.deposit))}
+          trackingToken={order.tracking_token}
+          pickupDate={order.pickup_date ? formatDate(order.pickup_date) : undefined}
+        />
+      )}
 
       {/* Paiements */}
       <Card className="p-4">

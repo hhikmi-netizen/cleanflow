@@ -11,6 +11,7 @@ const pageTitles: Record<string, string> = {
   '/clients': 'Clients',
   '/services': 'Catalogue',
   '/incidents': 'SAV',
+  '/express': 'Dépôt express',
   '/settings': 'Paramètres',
   '/onboarding': 'Configuration',
 }
