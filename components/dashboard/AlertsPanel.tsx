@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, Clock, CreditCard, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { AlertTriangle, Clock, CreditCard, MessageCircle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react'
 import { buildWhatsAppUrl } from '@/lib/utils'
 
 interface AlertOrder {
@@ -17,18 +17,27 @@ interface AlertOrder {
   days_ago: number
 }
 
+interface ExpiringSub {
+  id: string
+  clientName: string
+  subName: string
+  expiresAt: string
+  daysLeft: number
+}
+
 interface Props {
-  readyOverdue: AlertOrder[]   // ready > 3 days
-  processingLate: AlertOrder[] // in_progress > 5 days
+  readyOverdue: AlertOrder[]
+  processingLate: AlertOrder[]
   unpaidTotal: number
   unpaidCount: number
+  expiringSubs?: ExpiringSub[]
 }
 
 function days(n: number) { return `${n}j` }
 
-export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal, unpaidCount }: Props) {
+export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal, unpaidCount, expiringSubs = [] }: Props) {
   const [open, setOpen] = useState(true)
-  const total = readyOverdue.length + processingLate.length + (unpaidTotal > 0 ? 1 : 0)
+  const total = readyOverdue.length + processingLate.length + (unpaidTotal > 0 ? 1 : 0) + (expiringSubs.length > 0 ? 1 : 0)
   if (total === 0) return null
 
   return (
@@ -60,6 +69,27 @@ export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal,
               </div>
               <Link href="/orders" className="text-sm font-bold text-red-600 hover:underline">
                 {unpaidTotal.toFixed(2)} DH
+              </Link>
+            </div>
+          )}
+
+          {/* Expiring subscriptions */}
+          {expiringSubs.length > 0 && (
+            <div className="px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw size={14} className="text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {expiringSubs.length} abonnement{expiringSubs.length > 1 ? 's' : ''} expirant bientôt
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {expiringSubs.slice(0, 2).map(s => `${s.clientName} (${s.daysLeft}j)`).join(', ')}
+                    {expiringSubs.length > 2 && ` +${expiringSubs.length - 2}`}
+                  </p>
+                </div>
+              </div>
+              <Link href="/pricing" className="text-xs text-purple-600 hover:underline font-medium shrink-0">
+                Gérer →
               </Link>
             </div>
           )}

@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Search, UserPlus, X, Star } from 'lucide-react'
+import { Loader2, Plus, Trash2, Search, UserPlus, X, Star, RefreshCw, MapPin, Clock } from 'lucide-react'
 import { Client, Service } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
 import { adjustLoyaltyPoints } from '@/app/actions/loyalty'
+import { useSubscriptionOnOrder } from '@/app/actions/pricing'
 
 interface OrderItem {
   service_id: string
@@ -49,6 +50,11 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [depositMode, setDepositMode] = useState<'on_site' | 'pickup'>('on_site')
   const [deliveryMode, setDeliveryMode] = useState<'on_site' | 'delivery'>('on_site')
   const [pickupDate, setPickupDate] = useState('')
+  const [pickupAddress, setPickupAddress] = useState('')
+  const [pickupSlotTime, setPickupSlotTime] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliverySlotDate, setDeliverySlotDate] = useState('')
+  const [deliverySlotTime, setDeliverySlotTime] = useState('')
   const [notes, setNotes] = useState('')
   const [applyTax, setApplyTax] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -67,6 +73,12 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [redeemPoints, setRedeemPoints] = useState(false)
   const [pointsToRedeem, setPointsToRedeem] = useState(0)
 
+  // Subscriptions (MODULE B)
+  const [clientActiveSubs, setClientActiveSubs] = useState<any[]>([])
+  const [selectedSubId, setSelectedSubId] = useState('')
+  const [useSubBalance, setUseSubBalance] = useState(false)
+  const [subBalanceAmount, setSubBalanceAmount] = useState(0)
+
   // Quick client creation
   const [showNewClientForm, setShowNewClientForm] = useState(false)
   const [newClientName, setNewClientName] = useState('')
@@ -84,6 +96,24 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
     supabase.from('discount_rules').select('id, name, discount_type, value').eq('active', true)
       .then(({ data }) => { if (data) setAvailableDiscounts(data) })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load subscriptions when client changes
+  useEffect(() => {
+    if (!clientId) { setClientActiveSubs([]); setSelectedSubId(''); setUseSubBalance(false); setSubBalanceAmount(0); return }
+    const today = new Date().toISOString().split('T')[0]
+    supabase
+      .from('customer_subscriptions')
+      .select('id, status, balance, quota_used, kilo_used, expires_at, subscriptions(id, name, sub_type, quota_quantity, quota_kilo, credits)')
+      .eq('client_id', clientId)
+      .eq('status', 'active')
+      .or(`expires_at.gte.${today},expires_at.is.null`)
+      .then(({ data }) => {
+        setClientActiveSubs(data || [])
+        if (data && data.length === 1) setSelectedSubId(data[0].id)
+        else setSelectedSubId('')
+        setUseSubBalance(false); setSubBalanceAmount(0)
+      })
+  }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load loyalty data when client changes
   useEffect(() => {
@@ -226,16 +256,31 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const loyaltyDiscountAmount = redeemPoints && pointsToRedeem > 0
     ? Math.min(pointsToRedeem * pointsValueDh, subtotal)
     : 0
-  const effectiveDiscountType = loyaltyDiscountAmount > 0 ? 'fixed' : discountType
-  const effectiveDiscountValue = loyaltyDiscountAmount > 0 ? loyaltyDiscountAmount : discountValue
-  const effectiveDiscountLabel = loyaltyDiscountAmount > 0 ? `Fidélité (${pointsToRedeem} pts)` : discountLabel
+  const selectedSub = clientActiveSubs.find(cs => cs.id === selectedSubId)
+  const subDiscount = useSubBalance && selectedSub?.subscriptions?.sub_type === 'prepaid'
+    ? Math.min(subBalanceAmount, subtotal)
+    : 0
+
+  const effectiveDiscountType = (loyaltyDiscountAmount > 0 || subDiscount > 0) ? 'fixed' : discountType
+  const effectiveDiscountValue = loyaltyDiscountAmount > 0
+    ? loyaltyDiscountAmount
+    : subDiscount > 0
+      ? subDiscount
+      : discountValue
+  const effectiveDiscountLabel = loyaltyDiscountAmount > 0
+    ? `Fidélité (${pointsToRedeem} pts)`
+    : subDiscount > 0
+      ? `Forfait prépayé — ${selectedSub?.subscriptions?.name}`
+      : discountLabel
   const discountAmount = loyaltyDiscountAmount > 0
     ? loyaltyDiscountAmount
-    : discountType === 'percentage'
-      ? subtotal * (discountValue / 100)
-      : discountType === 'fixed'
-        ? Math.min(discountValue, subtotal)
-        : 0
+    : subDiscount > 0
+      ? subDiscount
+      : discountType === 'percentage'
+        ? subtotal * (discountValue / 100)
+        : discountType === 'fixed'
+          ? Math.min(discountValue, subtotal)
+          : 0
   const discountedSubtotal = subtotal - discountAmount
   const tax = applyTax ? discountedSubtotal * (taxRate / 100) : 0
   const total = discountedSubtotal + tax
@@ -247,6 +292,13 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
 
     setLoading(true)
     try {
+      const pickupSlot = depositMode === 'pickup' && depositDate
+        ? `${depositDate}${pickupSlotTime ? ' ' + pickupSlotTime : ''}`
+        : null
+      const delivSlot = deliveryMode === 'delivery' && deliverySlotDate
+        ? `${deliverySlotDate}${deliverySlotTime ? ' ' + deliverySlotTime : ''}`
+        : null
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -262,6 +314,11 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           deposit_mode: depositMode,
           delivery_mode: deliveryMode,
           pickup_date: pickupDate || null,
+          pickup_address: depositMode === 'pickup' ? (pickupAddress || null) : null,
+          delivery_address: deliveryMode === 'delivery' ? (deliveryAddress || null) : null,
+          pickup_slot: pickupSlot,
+          delivery_slot: delivSlot,
+          delivery_status: (depositMode === 'pickup' || deliveryMode === 'delivery') ? 'pending' : null,
           notes: notes || null,
           status: 'pending',
           paid: false,
@@ -284,6 +341,16 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
       // Deduct loyalty points if redeemed
       if (redeemPoints && pointsToRedeem > 0 && clientId) {
         await adjustLoyaltyPoints(clientId, -pointsToRedeem, `Échange — commande ${order.order_number}`)
+      }
+
+      // Use subscription if selected
+      if (selectedSubId) {
+        await useSubscriptionOnOrder({
+          customerSubId: selectedSubId,
+          orderId: order.id,
+          itemCount: items.reduce((s, i) => s + i.quantity, 0),
+          amountUsed: subDiscount > 0 ? subDiscount : 0,
+        })
       }
 
       toast.success(`Commande ${order.order_number} créée !`)
@@ -549,6 +616,40 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
             <Label>Date de retrait prévue</Label>
             <Input type="date" value={pickupDate} onChange={e => setPickupDate(e.target.value)} className="h-10" />
           </div>
+
+          {/* Collecte : adresse + créneau */}
+          {depositMode === 'pickup' && (
+            <>
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="flex items-center gap-1.5"><MapPin size={13} className="text-purple-500" />Adresse de collecte</Label>
+                <Input value={pickupAddress} onChange={e => setPickupAddress(e.target.value)}
+                  placeholder={selectedClient?.address || 'Adresse de collecte…'} className="h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><Clock size={13} className="text-purple-500" />Créneau collecte</Label>
+                <Input type="time" value={pickupSlotTime} onChange={e => setPickupSlotTime(e.target.value)} className="h-10" />
+              </div>
+            </>
+          )}
+
+          {/* Livraison : adresse + créneau */}
+          {deliveryMode === 'delivery' && (
+            <>
+              <div className="sm:col-span-2 space-y-2">
+                <Label className="flex items-center gap-1.5"><MapPin size={13} className="text-blue-500" />Adresse de livraison</Label>
+                <Input value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)}
+                  placeholder={selectedClient?.address || 'Adresse de livraison…'} className="h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5"><Clock size={13} className="text-blue-500" />Date livraison</Label>
+                <Input type="date" value={deliverySlotDate} onChange={e => setDeliverySlotDate(e.target.value)} className="h-10" />
+              </div>
+              <div className="space-y-2">
+                <Label>Créneau horaire</Label>
+                <Input type="time" value={deliverySlotTime} onChange={e => setDeliverySlotTime(e.target.value)} className="h-10" />
+              </div>
+            </>
+          )}
           <div className="space-y-2">
             <Label>Mode de paiement</Label>
             <select
@@ -596,6 +697,91 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           />
         </div>
       </Card>
+
+      {/* ── ABONNEMENT (MODULE B) ── */}
+      {clientActiveSubs.length > 0 && (
+        <Card className="p-5 border-purple-200 bg-purple-50">
+          <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
+            <RefreshCw size={15} className="text-purple-600" /> Abonnement client
+          </h3>
+          <div className="space-y-3">
+            {clientActiveSubs.length > 1 && (
+              <div>
+                <label className="text-xs text-purple-700 mb-1 block">Forfait à appliquer</label>
+                <select value={selectedSubId} onChange={e => { setSelectedSubId(e.target.value); setUseSubBalance(false); setSubBalanceAmount(0) }}
+                  className="w-full h-9 px-3 rounded-md border border-purple-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
+                  <option value="">— Ne pas appliquer —</option>
+                  {clientActiveSubs.map((cs: any) => (
+                    <option key={cs.id} value={cs.id}>{cs.subscriptions?.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {selectedSub && (
+              <div className="rounded-lg bg-white border border-purple-200 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-purple-900">{selectedSub.subscriptions?.name}</p>
+                  {selectedSub.expires_at && (
+                    <span className="text-xs text-purple-500">Expire le {new Date(selectedSub.expires_at).toLocaleDateString('fr-FR')}</span>
+                  )}
+                </div>
+
+                {/* Prepaid : déduction solde */}
+                {selectedSub.subscriptions?.sub_type === 'prepaid' && (
+                  <div className={`p-2 rounded-lg border transition-colors ${useSubBalance ? 'border-purple-400 bg-purple-50' : 'border-gray-200'}`}>
+                    <label className="flex items-center justify-between cursor-pointer">
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">Utiliser le solde prépayé</p>
+                        <p className="text-xs text-gray-500">Solde disponible : {formatCurrency(selectedSub.balance)}</p>
+                      </div>
+                      <input type="checkbox" checked={useSubBalance}
+                        onChange={e => {
+                          setUseSubBalance(e.target.checked)
+                          if (e.target.checked) setSubBalanceAmount(Math.min(Number(selectedSub.balance), subtotal))
+                          else setSubBalanceAmount(0)
+                        }}
+                        className="w-4 h-4 text-purple-600" />
+                    </label>
+                    {useSubBalance && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <label className="text-xs text-gray-500 shrink-0">Montant à utiliser :</label>
+                        <input type="number" min="0" step="0.01"
+                          max={Math.min(Number(selectedSub.balance), subtotal)}
+                          value={subBalanceAmount || ''}
+                          onChange={e => setSubBalanceAmount(Math.min(parseFloat(e.target.value) || 0, Number(selectedSub.balance)))}
+                          className="w-24 h-8 px-2 text-sm border border-purple-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-400" />
+                        <span className="text-xs text-green-700 font-medium">= − {formatCurrency(Math.min(subBalanceAmount, subtotal))} DH</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Shirts : quota restant */}
+                {selectedSub.subscriptions?.sub_type === 'shirts' && selectedSub.subscriptions?.quota_quantity && (
+                  <p className="text-xs text-purple-700">
+                    Quota : {selectedSub.subscriptions.quota_quantity - (selectedSub.quota_used || 0)} pièces restantes
+                    sur {selectedSub.subscriptions.quota_quantity}
+                  </p>
+                )}
+
+                {/* Kilo : quota restant */}
+                {selectedSub.subscriptions?.sub_type === 'kilo' && selectedSub.subscriptions?.quota_kilo && (
+                  <p className="text-xs text-purple-700">
+                    Quota : {(Number(selectedSub.subscriptions.quota_kilo) - Number(selectedSub.kilo_used || 0)).toFixed(2)} kg restants
+                    sur {selectedSub.subscriptions.quota_kilo} kg
+                  </p>
+                )}
+
+                {/* Monthly / Enterprise */}
+                {['monthly', 'enterprise'].includes(selectedSub.subscriptions?.sub_type) && (
+                  <p className="text-xs text-purple-600">✓ Commande rattachée à ce forfait pour le suivi d&apos;usage</p>
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* ── REMISE ── */}
       <Card className="p-5">

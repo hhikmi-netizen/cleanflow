@@ -110,10 +110,11 @@ END $$;
 UPDATE orders SET tracking_token = gen_random_uuid() WHERE tracking_token IS NULL;
 
 -- 4. RLS policy: allow anon to read orders by tracking_token (public tracking page)
--- Only expose non-sensitive fields via a view or specific policy
-CREATE POLICY IF NOT EXISTS "public_track_order"
-  ON orders FOR SELECT
-  USING (tracking_token IS NOT NULL);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'public_track_order' AND tablename = 'orders') THEN
+    CREATE POLICY "public_track_order" ON orders FOR SELECT USING (tracking_token IS NOT NULL);
+  END IF;
+END $$;
 
 -- Note: the public tracking page will use anon key + filter by tracking_token
 -- This is safe because tracking_token is a UUID (128-bit, non-guessable)

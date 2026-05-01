@@ -34,7 +34,9 @@ export default async function DashboardPage() {
   const readyThreshold    = new Date(today.getTime() - 3 * 24 * 3600 * 1000).toISOString()
   const processingThreshold = new Date(today.getTime() - 5 * 24 * 3600 * 1000).toISOString()
 
-  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes] = await Promise.all([
+  const expiryThreshold = new Date(today.getTime() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0]
+
+  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes, expiringSubs] = await Promise.all([
     supabase
       .from('orders')
       .select('id, total, status, created_at')
@@ -71,6 +73,14 @@ export default async function DashboardPage() {
       .eq('paid', false)
       .neq('status', 'cancelled')
       .gte('created_at', monthStart),
+    // Subscriptions expiring within 7 days
+    supabase
+      .from('customer_subscriptions')
+      .select('id, expires_at, clients(name), subscriptions(name)')
+      .eq('pressing_id', pressingId)
+      .eq('status', 'active')
+      .lte('expires_at', expiryThreshold)
+      .gte('expires_at', todayStr),
   ])
 
   const orders = ordersResult.data || []
@@ -99,6 +109,13 @@ export default async function DashboardPage() {
   const unpaidOrders   = unpaidRes.data || []
   const unpaidTotal    = unpaidOrders.reduce((s, o) => s + Math.max(0, Number(o.total) - Number(o.deposit || 0)), 0)
   const unpaidCount    = unpaidOrders.length
+  const expiringSubsList = (expiringSubs.data || []).map((cs: any) => ({
+    id: cs.id,
+    clientName: cs.clients?.name || '—',
+    subName: cs.subscriptions?.name || '—',
+    expiresAt: cs.expires_at,
+    daysLeft: Math.ceil((new Date(cs.expires_at).getTime() - today.getTime()) / (24 * 3600 * 1000)),
+  }))
 
   return (
     <div className="space-y-6">
@@ -146,6 +163,7 @@ export default async function DashboardPage() {
         processingLate={processingLate}
         unpaidTotal={unpaidTotal}
         unpaidCount={unpaidCount}
+        expiringSubs={expiringSubsList}
       />
 
       <Card className="p-5">

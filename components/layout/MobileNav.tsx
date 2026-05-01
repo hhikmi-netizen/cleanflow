@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog } from 'lucide-react'
+import { Menu, X, Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/clients',    label: 'Clients',     icon: Users },
   { href: '/services',   label: 'Catalogue',   icon: Package },
   { href: '/incidents',  label: 'SAV',         icon: AlertTriangle },
+  { href: '/livraisons', label: 'Livraisons',   icon: Truck },
   { href: '/stats',      label: 'Statistiques', icon: BarChart2 },
   { href: '/pricing',    label: 'Tarification', icon: Tag },
   { href: '/team',       label: 'Équipe',      icon: UserCog },

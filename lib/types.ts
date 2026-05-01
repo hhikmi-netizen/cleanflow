@@ -61,6 +61,7 @@ export interface Service {
 }
 
 export type DiscountType = 'none' | 'percentage' | 'fixed'
+export type DeliveryStatus = 'pending' | 'scheduled' | 'en_route' | 'delivered' | 'failed'
 
 export interface Order {
   id: string
@@ -86,6 +87,13 @@ export interface Order {
   pickup_date?: string
   delivered_at?: string
   notes?: string
+  pickup_address?: string | null
+  delivery_address?: string | null
+  pickup_slot?: string | null
+  delivery_slot?: string | null
+  assigned_to?: string | null
+  delivery_status?: DeliveryStatus | null
+  customer_sub_id?: string | null
   created_at: string
   updated_at: string
   clients?: Pick<Client, 'id' | 'name' | 'phone' | 'address'>
@@ -217,6 +225,10 @@ export interface PriceRule {
   active: boolean
   valid_from?: string
   valid_until?: string
+  zone_name?: string | null
+  days_of_week?: number[] | null
+  time_from?: string | null
+  time_until?: string | null
   created_at: string
   updated_at: string
   services?: { name: string } | null

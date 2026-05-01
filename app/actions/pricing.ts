@@ -26,6 +26,10 @@ export async function createPriceRule(payload: {
   priority?: number
   valid_from?: string
   valid_until?: string
+  zone_name?: string
+  days_of_week?: number[]
+  time_from?: string
+  time_until?: string
 }) {
   const { supabase, pressingId } = await getPressingId()
   const { error } = await supabase.from('price_rules').insert({
@@ -34,6 +38,10 @@ export async function createPriceRule(payload: {
     service_id: payload.service_id || null,
     valid_from: payload.valid_from || null,
     valid_until: payload.valid_until || null,
+    zone_name: payload.zone_name || null,
+    days_of_week: payload.days_of_week?.length ? payload.days_of_week : null,
+    time_from: payload.time_from || null,
+    time_until: payload.time_until || null,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/pricing')
@@ -187,4 +195,63 @@ export async function deleteDiscountRule(id: string) {
     .delete().eq('id', id).eq('pressing_id', pressingId)
   if (error) throw new Error(error.message)
   revalidatePath('/pricing')
+}
+
+// ── Subscription usage on order ───────────────────────────────────────────
+
+export async function useSubscriptionOnOrder(payload: {
+  customerSubId: string
+  orderId: string
+  itemCount?: number
+  kiloAmount?: number
+  amountUsed?: number
+}): Promise<{ discountAmount: number }> {
+  const { supabase, pressingId } = await getPressingId()
+
+  const { data: cs } = await supabase
+    .from('customer_subscriptions')
+    .select('*, subscriptions(sub_type, quota_quantity, quota_kilo, credits)')
+    .eq('id', payload.customerSubId)
+    .eq('pressing_id', pressingId)
+    .eq('status', 'active')
+    .single()
+
+  if (!cs) throw new Error('Abonnement introuvable ou inactif')
+
+  const sub = cs.subscriptions as any
+  const subType: string = sub?.sub_type || ''
+  let discountAmount = 0
+  const updates: Record<string, number> = {}
+
+  if (subType === 'prepaid') {
+    const use = Math.min(payload.amountUsed || 0, Number(cs.balance))
+    discountAmount = use
+    updates.balance = Math.max(0, Number(cs.balance) - use)
+  } else if (subType === 'shirts') {
+    const use = payload.itemCount || 0
+    updates.quota_used = (Number(cs.quota_used) || 0) + use
+  } else if (subType === 'kilo') {
+    const use = payload.kiloAmount || 0
+    updates.kilo_used = (Number(cs.kilo_used) || 0) + use
+  }
+  // monthly/enterprise: no numeric deduction, just link to order
+
+  if (Object.keys(updates).length > 0) {
+    const { error } = await supabase
+      .from('customer_subscriptions')
+      .update(updates)
+      .eq('id', payload.customerSubId)
+    if (error) throw new Error(error.message)
+  }
+
+  // Link subscription to order
+  await supabase
+    .from('orders')
+    .update({ customer_sub_id: payload.customerSubId })
+    .eq('id', payload.orderId)
+    .eq('pressing_id', pressingId)
+
+  revalidatePath('/pricing')
+  revalidatePath(`/clients`)
+  return { discountAmount }
 }

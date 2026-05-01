@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
-import { Search, Users, Phone, Download, Star } from 'lucide-react'
+import { Search, Users, Phone, Download, Star, RefreshCw } from 'lucide-react'
 import EmptyState from '@/components/shared/EmptyState'
 import { Client } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
@@ -34,7 +34,7 @@ function exportCSV(clients: Client[]) {
   URL.revokeObjectURL(url)
 }
 
-export default function ClientList({ clients }: { clients: Client[] }) {
+export default function ClientList({ clients, subscribedClientIds = new Set() }: { clients: Client[]; subscribedClientIds?: Set<string> }) {
   const [search, setSearch]       = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [sortKey, setSortKey]     = useState<SortKey>('name')
@@ -161,11 +161,19 @@ export default function ClientList({ clients }: { clients: Client[] }) {
               <tbody className="divide-y divide-gray-50">
                 {filtered.map(client => {
                   const pts = (client as any).loyalty_points || 0
+                  const isSubscribed = subscribedClientIds.has(client.id)
                   return (
                     <tr key={client.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
                         <div>
-                          <p className="font-medium text-gray-900">{client.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900">{client.name}</p>
+                            {isSubscribed && (
+                              <span className="inline-flex items-center gap-0.5 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">
+                                <RefreshCw size={9} /> Abonné
+                              </span>
+                            )}
+                          </div>
                           {(client as any).client_code && (
                             <p className="text-xs font-mono text-gray-400">{(client as any).client_code}</p>
                           )}
@@ -210,12 +218,20 @@ export default function ClientList({ clients }: { clients: Client[] }) {
           <div className="md:hidden divide-y divide-gray-100">
             {filtered.map(client => {
               const pts = (client as any).loyalty_points || 0
+              const isSubscribed = subscribedClientIds.has(client.id)
               return (
                 <Link key={client.id} href={`/clients/${client.id}`}>
                   <div className="p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-center justify-between mb-1">
                       <div>
-                        <p className="font-medium text-gray-900">{client.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900">{client.name}</p>
+                          {isSubscribed && (
+                            <span className="inline-flex items-center gap-0.5 text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">
+                              <RefreshCw size={9} /> Abonné
+                            </span>
+                          )}
+                        </div>
                         {(client as any).client_code && (
                           <p className="text-xs font-mono text-gray-400">{(client as any).client_code}</p>
                         )}

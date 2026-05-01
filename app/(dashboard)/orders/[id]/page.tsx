@@ -12,7 +12,7 @@ import WhatsAppNotifications from '@/components/orders/WhatsAppNotifications'
 import ArticleLabels from '@/components/orders/ArticleLabels'
 import { formatCurrency, formatDate, formatDateTime, getPaymentLabel, buildWhatsAppUrl, buildGoogleMapsUrl } from '@/lib/utils'
 import Link from 'next/link'
-import { ChevronLeft, MapPin, Phone, MessageCircle, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, MapPin, Phone, MessageCircle, AlertTriangle, Truck, Package } from 'lucide-react'
 
 export default async function OrderDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createServerClient()
@@ -264,6 +264,36 @@ export default async function OrderDetailPage({ params }: { params: { id: string
           <div className="mt-3 pt-3 border-t border-gray-100">
             <p className="text-gray-400 text-xs mb-1">Notes</p>
             <p className="text-sm text-gray-700">{order.notes}</p>
+          </div>
+        )}
+        {(order.deposit_mode === 'pickup' || order.delivery_mode === 'delivery') && (
+          <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+            <p className="text-gray-400 text-xs">Collecte / Livraison</p>
+            {order.deposit_mode === 'pickup' && (
+              <div className="flex items-start gap-2 text-sm">
+                <Package size={13} className="text-purple-500 mt-0.5 shrink-0" />
+                <div>
+                  <span className="font-medium text-gray-700">Collecte</span>
+                  {(order as any).pickup_slot && <span className="text-gray-500 ml-2">{(order as any).pickup_slot}</span>}
+                  {(order as any).pickup_address && <p className="text-xs text-gray-400 mt-0.5">{(order as any).pickup_address}</p>}
+                </div>
+              </div>
+            )}
+            {order.delivery_mode === 'delivery' && (
+              <div className="flex items-start gap-2 text-sm">
+                <Truck size={13} className="text-blue-500 mt-0.5 shrink-0" />
+                <div>
+                  <span className="font-medium text-gray-700">Livraison</span>
+                  {(order as any).delivery_slot && <span className="text-gray-500 ml-2">{(order as any).delivery_slot}</span>}
+                  {(order as any).delivery_address && <p className="text-xs text-gray-400 mt-0.5">{(order as any).delivery_address}</p>}
+                  {(order as any).delivery_status && (
+                    <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                      {{pending:'En attente',scheduled:'Planifié',en_route:'En route',delivered:'Livré',failed:'Échec'}[(order as any).delivery_status as string] || (order as any).delivery_status}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
         {order.tracking_token && (

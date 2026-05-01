@@ -20,11 +20,12 @@ export default async function ClientsPage() {
 
   if (!userData?.pressing_id) redirect('/onboarding')
 
-  const { data: clients } = await supabase
-    .from('clients')
-    .select('*')
-    .eq('pressing_id', userData.pressing_id)
-    .order('name')
+  const [{ data: clients }, { data: activeSubs }] = await Promise.all([
+    supabase.from('clients').select('*').eq('pressing_id', userData.pressing_id).order('name'),
+    supabase.from('customer_subscriptions').select('client_id').eq('pressing_id', userData.pressing_id).eq('status', 'active'),
+  ])
+
+  const subscribedClientIds = new Set((activeSubs || []).map((s: any) => s.client_id as string))
 
   return (
     <div className="space-y-6">
@@ -34,7 +35,7 @@ export default async function ClientsPage() {
           <Button>+ Nouveau client</Button>
         </Link>
       </div>
-      <ClientList clients={clients || []} />
+      <ClientList clients={clients || []} subscribedClientIds={subscribedClientIds} />
     </div>
   )
 }
