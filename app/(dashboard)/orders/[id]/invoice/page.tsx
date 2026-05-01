@@ -50,6 +50,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         <Link href={`/orders/${order.id}`} className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
           <ChevronLeft size={16} /> Retour
         </Link>
+        <Link
+          href={`/orders/${order.id}/ticket`}
+          className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-800 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          🧾 Ticket 80mm
+        </Link>
         <PrintButton />
       </div>
 

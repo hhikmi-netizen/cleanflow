@@ -383,12 +383,19 @@ export default function PosTerminal({ services, pressingId, pressingName, pressi
 
         <div className="flex flex-col gap-2 w-full">
           <a
-            href={`/orders/${createdOrder.id}/invoice`}
+            href={`/orders/${createdOrder.id}/ticket`}
             target="_blank"
-            className="flex items-center justify-center gap-2 w-full h-12 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 w-full h-12 border-2 border-blue-200 rounded-xl text-sm font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50 transition-colors"
           >
             <Printer size={16} />
-            Imprimer le ticket
+            Ticket 80mm
+          </a>
+          <a
+            href={`/orders/${createdOrder.id}/invoice`}
+            target="_blank"
+            className="flex items-center justify-center gap-2 w-full h-10 border border-gray-200 rounded-xl text-xs font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 transition-colors"
+          >
+            Facture A4
           </a>
 
           {waUrl && client?.phone && (

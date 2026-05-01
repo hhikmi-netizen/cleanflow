@@ -108,9 +108,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           trackingToken={order.tracking_token}
         />
         <div className="flex items-center gap-2">
+          <Link href={`/orders/${order.id}/ticket`}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors border border-gray-200">
+            🧾 Ticket 80mm
+          </Link>
           <Link href={`/orders/${order.id}/invoice`}
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors border border-gray-200">
-            Facture / Bon
+            Facture A4
           </Link>
           <Link href={`/incidents/new?orderId=${order.id}&clientId=${order.clients?.id || ''}&orderNumber=${order.order_number}`}>
             <button className="flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-700 hover:bg-orange-50 px-3 py-1.5 rounded-lg transition-colors">
