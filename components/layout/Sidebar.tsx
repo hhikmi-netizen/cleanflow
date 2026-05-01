@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet } from 'lucide-react'
+import { Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet, Plus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import ModeSwitch from '@/components/ui/ModeSwitch'
 
 const navItems = [
   { href: '/dashboard',  label: 'Dashboard',   icon: Home },
@@ -62,7 +63,14 @@ export default function Sidebar() {
           )
         })}
       </nav>
-      <div className="p-3 border-t border-gray-100">
+      <div className="p-3 border-t border-gray-100 space-y-2">
+        <Link href="/orders/quick" className="flex items-center justify-center gap-2 w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
+          <Plus size={16} />
+          Nouvelle commande
+        </Link>
+        <div className="flex justify-center py-1">
+          <ModeSwitch />
+        </div>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full"

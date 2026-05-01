@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { getStatusColor, getStatusLabel, formatDate } from '@/lib/utils'
 import { redirect } from 'next/navigation'
+import VisualMenu from '@/components/dashboard/VisualMenu'
 
 export default async function DashboardPage() {
   const supabase = await createServerClient()
@@ -215,6 +216,8 @@ export default async function DashboardPage() {
           color="purple"
         />
       </div>
+
+      <VisualMenu />
 
       <AlertsPanel
         readyOverdue={readyOverdue}
