@@ -4,10 +4,11 @@ import { createServerClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import PrintButton from '@/components/orders/PrintButton'
+import ReleveFilter from '@/components/clients/ReleveFilter'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
-export default async function ClientReleve({ params }: { params: { id: string } }) {
+export default async function ClientReleve({ params, searchParams }: { params: { id: string }, searchParams: { from?: string, to?: string } }) {
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,13 +32,21 @@ export default async function ClientReleve({ params }: { params: { id: string } 
     .eq('id', userData!.pressing_id)
     .single()
 
-  const { data: orders } = await supabase
+  const dateFrom = searchParams.from || ''
+  const dateTo = searchParams.to || ''
+
+  let ordersQuery = supabase
     .from('orders')
     .select('id, order_number, status, total, deposit, paid, created_at, payment_terms, invoice_number')
     .eq('client_id', client.id)
     .eq('pressing_id', userData!.pressing_id)
     .neq('status', 'cancelled')
     .order('created_at', { ascending: true })
+
+  if (dateFrom) ordersQuery = ordersQuery.gte('created_at', dateFrom)
+  if (dateTo) ordersQuery = ordersQuery.lte('created_at', dateTo + 'T23:59:59')
+
+  const { data: orders } = await ordersQuery
 
   const orderIds = (orders || []).map(o => o.id)
   const { data: payments } = orderIds.length > 0
@@ -69,19 +78,22 @@ export default async function ClientReleve({ params }: { params: { id: string } 
 
   return (
     <>
-      <div className="print:hidden flex items-center gap-4 mb-6 px-4">
-        <Link href={`/clients/${client.id}`} className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
-          <ChevronLeft size={16} /> Retour
-        </Link>
-        <PrintButton />
-        {client.client_type === 'business' && (
-          <Link
-            href={`/clients/${client.id}/batch-invoice`}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Facture groupée →
+      <div className="print:hidden flex flex-col gap-3 mb-6 px-4">
+        <div className="flex items-center gap-4">
+          <Link href={`/clients/${client.id}`} className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
+            <ChevronLeft size={16} /> Retour
           </Link>
-        )}
+          <PrintButton />
+          {client.client_type === 'business' && (
+            <Link
+              href={`/clients/${client.id}/batch-invoice`}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Facture groupée →
+            </Link>
+          )}
+        </div>
+        <ReleveFilter clientId={client.id} defaultFrom={dateFrom} defaultTo={dateTo} />
       </div>
 
       <div className="max-w-3xl mx-auto bg-white p-8 print:p-4 print:max-w-none shadow-sm border border-gray-200 print:border-0 print:shadow-none">
@@ -97,6 +109,11 @@ export default async function ClientReleve({ params }: { params: { id: string } 
           <div className="text-right">
             <h2 className="text-lg font-bold text-gray-800 uppercase tracking-wide">Relevé de compte</h2>
             <p className="text-sm text-gray-500 mt-1">Édité le {formatDate(new Date().toISOString())}</p>
+            {(dateFrom || dateTo) && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                Période : {dateFrom ? formatDate(dateFrom) : '…'} → {dateTo ? formatDate(dateTo) : '…'}
+              </p>
+            )}
           </div>
         </div>
 

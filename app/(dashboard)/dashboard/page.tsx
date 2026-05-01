@@ -36,7 +36,12 @@ export default async function DashboardPage() {
 
   const expiryThreshold = new Date(today.getTime() + 7 * 24 * 3600 * 1000).toISOString().split('T')[0]
 
-  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes, expiringSubs, allActiveSubs] = await Promise.all([
+  const net15Threshold = new Date(today.getTime() - 15 * 24 * 3600 * 1000).toISOString()
+  const net30Threshold = new Date(today.getTime() - 30 * 24 * 3600 * 1000).toISOString()
+  const net45Threshold = new Date(today.getTime() - 45 * 24 * 3600 * 1000).toISOString()
+  const net60Threshold = new Date(today.getTime() - 60 * 24 * 3600 * 1000).toISOString()
+
+  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes, expiringSubs, allActiveSubs, overdueB2BRes] = await Promise.all([
     supabase
       .from('orders')
       .select('id, total, status, created_at')
@@ -87,6 +92,15 @@ export default async function DashboardPage() {
       .select('id, balance, quota_used, kilo_used, clients(id, name), subscriptions(name, sub_type, quota_quantity, quota_kilo, credits, price)')
       .eq('pressing_id', pressingId)
       .eq('status', 'active'),
+    // Overdue B2B invoices (non-immediate payment_terms past due)
+    supabase
+      .from('orders')
+      .select('id, order_number, created_at, total, deposit, payment_terms, clients(id, name, phone)')
+      .eq('pressing_id', pressingId)
+      .eq('paid', false)
+      .neq('status', 'cancelled')
+      .neq('payment_terms', 'immediate')
+      .not('payment_terms', 'is', null),
   ])
 
   const orders = ordersResult.data || []
@@ -140,6 +154,27 @@ export default async function DashboardPage() {
     return [{ id: cs.id, clientId, clientName: (cs.clients as any)?.name || '—', subName: sub.name || '—', pctUsed }]
   })
 
+  const TERMS_DAYS: Record<string, number> = { net15: 15, net30: 30, net45: 45, net60: 60 }
+  const overdueB2BList = (overdueB2BRes.data || []).flatMap((o: any) => {
+    const days = TERMS_DAYS[o.payment_terms]
+    if (!days) return []
+    const dueDate = new Date(o.created_at)
+    dueDate.setDate(dueDate.getDate() + days)
+    if (dueDate > today) return []
+    const overdueDays = Math.floor((today.getTime() - dueDate.getTime()) / (24 * 3600 * 1000))
+    return [{
+      id: o.id,
+      orderNumber: o.order_number,
+      clientName: (o.clients as any)?.name || '—',
+      clientId: (o.clients as any)?.id,
+      clientPhone: (o.clients as any)?.phone || '',
+      total: Number(o.total),
+      deposit: Number(o.deposit || 0),
+      paymentTerms: o.payment_terms,
+      overdueDays,
+    }]
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -188,6 +223,7 @@ export default async function DashboardPage() {
         unpaidCount={unpaidCount}
         expiringSubs={expiringSubsList}
         lowQuotaSubs={lowQuotaSubsList}
+        overdueB2B={overdueB2BList}
       />
 
       <Card className="p-5">

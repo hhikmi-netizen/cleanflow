@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Search, UserPlus, X, Star, RefreshCw, MapPin, Clock, Tag } from 'lucide-react'
+import { Loader2, Plus, Trash2, Search, UserPlus, X, Star, RefreshCw, MapPin, Clock, Tag, AlertTriangle } from 'lucide-react'
 import { Client, Service } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
 import { adjustLoyaltyPoints } from '@/app/actions/loyalty'
@@ -86,6 +86,10 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   // Price engine
   const [priceRules, setPriceRules] = useState<ApplicablePriceRule[]>([])
 
+  // B2B credit limit
+  const [clientCreditLimit, setClientCreditLimit] = useState<number | null>(null)
+  const [clientOutstandingBalance, setClientOutstandingBalance] = useState(0)
+
   // Quick client creation
   const [showNewClientForm, setShowNewClientForm] = useState(false)
   const [newClientName, setNewClientName] = useState('')
@@ -140,6 +144,30 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
     })
     setRedeemPoints(false)
     setPointsToRedeem(0)
+  }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load credit limit + outstanding balance when business client changes
+  useEffect(() => {
+    const currentClient = clients.find(c => c.id === clientId)
+    if (!clientId || currentClient?.client_type !== 'business') {
+      setClientCreditLimit(null); setClientOutstandingBalance(0); return
+    }
+    Promise.all([
+      supabase.from('clients').select('credit_limit').eq('id', clientId).single(),
+      supabase.from('orders')
+        .select('total, deposit')
+        .eq('client_id', clientId)
+        .eq('paid', false)
+        .neq('status', 'cancelled'),
+      supabase.from('payments').select('amount, orders!inner(client_id)').eq('orders.client_id', clientId),
+    ]).then(([clientRes, ordersRes, paymentsRes]) => {
+      const limit = clientRes.data?.credit_limit ? Number(clientRes.data.credit_limit) : null
+      setClientCreditLimit(limit)
+      const unpaidOrders = ordersRes.data || []
+      const paymentsTotal = (paymentsRes.data || []).reduce((s: number, p: any) => s + Number(p.amount), 0)
+      const outstanding = unpaidOrders.reduce((s, o) => s + Math.max(0, Number(o.total) - Number(o.deposit || 0)), 0) - paymentsTotal
+      setClientOutstandingBalance(Math.max(0, outstanding))
+    })
   }, [clientId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close dropdowns on outside click
@@ -336,6 +364,11 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
     if (!clientId) { toast.error('Sélectionnez un client'); return }
     if (items.length === 0) { toast.error('Ajoutez au moins un article'); return }
 
+    if (clientCreditLimit !== null && clientOutstandingBalance + total > clientCreditLimit) {
+      toast.error(`Plafond crédit dépassé — disponible : ${formatCurrency(Math.max(0, clientCreditLimit - clientOutstandingBalance))}`)
+      return
+    }
+
     if (selectedSubId && selectedSub) {
       const sub = selectedSub.subscriptions
       if (sub?.sub_type === 'shirts' && sub.quota_quantity) {
@@ -513,6 +546,29 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
               </div>
             )}
           </div>
+        )}
+
+        {/* B2B credit limit banner */}
+        {clientCreditLimit !== null && (
+          (() => {
+            const projectedBalance = clientOutstandingBalance + total
+            const remaining = clientCreditLimit - clientOutstandingBalance
+            const isOver = projectedBalance > clientCreditLimit
+            return (
+              <div className={`mt-3 px-3 py-2.5 rounded-lg border text-sm flex items-start gap-2 ${isOver ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+                <AlertTriangle size={14} className={`mt-0.5 shrink-0 ${isOver ? 'text-red-500' : 'text-amber-500'}`} />
+                <div>
+                  <p className="font-medium">
+                    {isOver ? 'Plafond crédit dépassé' : 'Plafond crédit'}
+                  </p>
+                  <p className="text-xs mt-0.5 opacity-80">
+                    Encours actuel : {formatCurrency(clientOutstandingBalance)} · Plafond : {formatCurrency(clientCreditLimit)} · Disponible : {formatCurrency(Math.max(0, remaining))}
+                    {isOver && ` · Dépassement : ${formatCurrency(projectedBalance - clientCreditLimit)}`}
+                  </p>
+                </div>
+              </div>
+            )
+          })()
         )}
 
         {/* Formulaire création rapide client */}

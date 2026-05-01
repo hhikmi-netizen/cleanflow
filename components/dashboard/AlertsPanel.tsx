@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, Clock, CreditCard, MessageCircle, ChevronDown, ChevronUp, RefreshCw, Gauge } from 'lucide-react'
+import { AlertTriangle, Clock, CreditCard, MessageCircle, ChevronDown, ChevronUp, RefreshCw, Gauge, FileWarning } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 import { buildWhatsAppUrl } from '@/lib/utils'
 
 interface AlertOrder {
@@ -33,6 +34,18 @@ interface LowQuotaSub {
   pctUsed: number
 }
 
+interface OverdueB2BOrder {
+  id: string
+  orderNumber: string
+  clientName: string
+  clientId: string
+  clientPhone: string
+  total: number
+  deposit: number
+  paymentTerms: string
+  overdueDays: number
+}
+
 interface Props {
   readyOverdue: AlertOrder[]
   processingLate: AlertOrder[]
@@ -40,13 +53,14 @@ interface Props {
   unpaidCount: number
   expiringSubs?: ExpiringSub[]
   lowQuotaSubs?: LowQuotaSub[]
+  overdueB2B?: OverdueB2BOrder[]
 }
 
 function days(n: number) { return `${n}j` }
 
-export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal, unpaidCount, expiringSubs = [], lowQuotaSubs = [] }: Props) {
+export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal, unpaidCount, expiringSubs = [], lowQuotaSubs = [], overdueB2B = [] }: Props) {
   const [open, setOpen] = useState(true)
-  const total = readyOverdue.length + processingLate.length + (unpaidTotal > 0 ? 1 : 0) + (expiringSubs.length > 0 ? 1 : 0) + (lowQuotaSubs.length > 0 ? 1 : 0)
+  const total = readyOverdue.length + processingLate.length + (unpaidTotal > 0 ? 1 : 0) + (expiringSubs.length > 0 ? 1 : 0) + (lowQuotaSubs.length > 0 ? 1 : 0) + overdueB2B.length
   if (total === 0) return null
 
   return (
@@ -123,6 +137,32 @@ export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal,
               </Link>
             </div>
           )}
+
+          {/* Overdue B2B invoices */}
+          {overdueB2B.map(o => (
+            <div key={o.id} className="px-4 py-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <FileWarning size={13} className="text-red-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    <Link href={`/orders/${o.id}`} className="hover:text-blue-600">{o.orderNumber}</Link>
+                    {' '}<span className="font-normal text-gray-500">— {o.clientName}</span>
+                  </p>
+                  <p className="text-xs text-red-700">
+                    Échéance dépassée de {o.overdueDays}j · {o.paymentTerms.replace('net', 'Net ')} · {formatCurrency(o.total - o.deposit)} restant
+                  </p>
+                </div>
+              </div>
+              <a
+                href={buildWhatsAppUrl(o.clientPhone, `Bonjour ${o.clientName}, votre facture ${o.orderNumber} est arrivée à échéance. Merci de procéder au règlement. 🙏`)}
+                target="_blank" rel="noopener noreferrer"
+                className="shrink-0 p-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-600 transition-colors"
+                title="Rappel WhatsApp"
+              >
+                <MessageCircle size={14} />
+              </a>
+            </div>
+          ))}
 
           {/* Ready overdue */}
           {readyOverdue.map(o => (
