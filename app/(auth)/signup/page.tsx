@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Loader2, Mail } from 'lucide-react'
+import { Loader2, Mail, Users } from 'lucide-react'
+import { joinPressing } from '@/app/actions/onboarding'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -17,9 +18,11 @@ export default function SignupPage() {
   const [businessName, setBusinessName] = useState('')
   const [phone, setPhone] = useState('')
   const [fullName, setFullName] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
+  const [loading, setLoading]               = useState(false)
+  const [googleLoading, setGoogleLoading]   = useState(false)
   const [confirmationSent, setConfirmationSent] = useState(false)
+  const [teamCode, setTeamCode]             = useState('')
+  const [isEmployee, setIsEmployee]         = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -43,9 +46,15 @@ export default function SignupPage() {
         return
       }
 
-      await createPressingData(authData.user.id)
-      toast.success('Compte créé ! Bienvenue sur CleanFlow.')
-      router.push('/onboarding')
+      if (isEmployee && teamCode.trim()) {
+        await joinPressing(teamCode.trim(), fullName, phone)
+        toast.success('Compte créé ! Vous avez rejoint l\'équipe.')
+        router.push('/dashboard')
+      } else {
+        await createPressingData(authData.user.id)
+        toast.success('Compte créé ! Bienvenue sur CleanFlow.')
+        router.push('/onboarding')
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {
@@ -109,7 +118,9 @@ export default function SignupPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center pb-2">
         <div className="text-4xl font-bold text-blue-600 mb-2">CleanFlow</div>
-        <CardTitle className="text-xl text-gray-600 font-normal">Créer votre pressing</CardTitle>
+        <CardTitle className="text-xl text-gray-600 font-normal">
+          {isEmployee ? 'Rejoindre un pressing' : 'Créer votre pressing'}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {/* Google */}
@@ -140,12 +151,38 @@ export default function SignupPage() {
           </div>
         </div>
 
+        {/* Mode toggle */}
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden mb-4">
+          <button type="button"
+            onClick={() => setIsEmployee(false)}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${!isEmployee ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          >
+            Nouveau pressing
+          </button>
+          <button type="button"
+            onClick={() => setIsEmployee(true)}
+            className={`flex-1 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${isEmployee ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          >
+            <Users size={14} /> Rejoindre une équipe
+          </button>
+        </div>
+
         <form onSubmit={handleSignup} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Nom du pressing *</Label>
-            <Input id="businessName" placeholder="Pressing Al Amal" value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)} required className="h-11" />
-          </div>
+          {isEmployee ? (
+            <div className="space-y-2">
+              <Label htmlFor="teamCode">Code d&apos;équipe *</Label>
+              <Input id="teamCode" placeholder="Entrez le code fourni par votre responsable"
+                value={teamCode} onChange={e => setTeamCode(e.target.value)}
+                required={isEmployee} className="h-11 font-mono text-sm" />
+              <p className="text-xs text-gray-400">Votre responsable peut le trouver dans Équipe → Inviter un employé</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="businessName">Nom du pressing *</Label>
+              <Input id="businessName" placeholder="Pressing Al Amal" value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)} required={!isEmployee} className="h-11" />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="fullName">Votre nom *</Label>
             <Input id="fullName" placeholder="Mohammed Alami" value={fullName}
@@ -167,7 +204,10 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)} required minLength={6} className="h-11" />
           </div>
           <Button type="submit" className="w-full h-11" disabled={loading}>
-            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Création...</> : "S'inscrire gratuitement"}
+            {loading
+              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {isEmployee ? 'Connexion...' : 'Création...'}</>
+              : isEmployee ? 'Rejoindre l\'équipe' : 'S\'inscrire gratuitement'
+            }
           </Button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-4">

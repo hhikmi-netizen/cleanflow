@@ -144,6 +144,39 @@ export async function addServices(pressingId: string, serviceIndexes: number[]):
   if (error) throw new Error(error.message)
 }
 
+export async function joinPressing(teamCode: string, fullName: string, phone: string): Promise<void> {
+  const cookieStore = await cookies()
+  const supabase = getSupabase(cookieStore)
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error('Session expirée, veuillez vous reconnecter')
+
+  // Verify the pressing exists
+  const { data: pressing, error: pressingError } = await supabase
+    .from('pressings')
+    .select('id, name')
+    .eq('id', teamCode.trim())
+    .single()
+  if (pressingError || !pressing) throw new Error('Code d\'équipe invalide ou pressing introuvable')
+
+  // Check user isn't already in a pressing
+  const { data: existing } = await supabase
+    .from('users')
+    .select('pressing_id')
+    .eq('id', user.id)
+    .single()
+  if (existing?.pressing_id) throw new Error('Ce compte appartient déjà à un pressing')
+
+  const { error: userError } = await supabase.from('users').upsert({
+    id: user.id,
+    pressing_id: pressing.id,
+    role: 'employee',
+    full_name: fullName || (user.user_metadata?.full_name as string) || 'Employé',
+    phone: phone || null,
+  }, { onConflict: 'id' })
+  if (userError) throw new Error(userError.message)
+}
+
 export async function addClient(pressingId: string, name: string, phone: string): Promise<void> {
   const cookieStore = await cookies()
   const supabase = getSupabase(cookieStore)

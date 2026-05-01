@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2 } from 'lucide-react'
+import { Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -16,6 +16,7 @@ const navItems = [
   { href: '/incidents',  label: 'SAV',          icon: AlertTriangle },
   { href: '/stats',      label: 'Statistiques', icon: BarChart2 },
   { href: '/pricing',    label: 'Tarification', icon: Tag },
+  { href: '/team',       label: 'Équipe',       icon: UserCog },
   { href: '/settings',   label: 'Paramètres',   icon: Settings },
 ]
 
