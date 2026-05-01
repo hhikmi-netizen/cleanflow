@@ -90,8 +90,8 @@ export default function AlertsPanel({ readyOverdue, processingLate, unpaidTotal,
                   <p className="text-xs text-gray-500">{unpaidCount} commande{unpaidCount > 1 ? 's' : ''} non soldées</p>
                 </div>
               </div>
-              <Link href="/orders" className="text-sm font-bold text-red-600 hover:underline">
-                {unpaidTotal.toFixed(2)} DH
+              <Link href="/credit" className="text-sm font-bold text-red-600 hover:underline">
+                {unpaidTotal.toFixed(2)} DH →
               </Link>
             </div>
           )}

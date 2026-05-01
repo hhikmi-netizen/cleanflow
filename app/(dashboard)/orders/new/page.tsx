@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
-export default async function NewOrderPage() {
+export default async function NewOrderPage({ searchParams }: { searchParams: Promise<{ clientId?: string }> }) {
+  const sp = await searchParams
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -39,6 +40,7 @@ export default async function NewOrderPage() {
         services={servicesResult.data || []}
         pressingId={userData.pressing_id}
         taxRate={pressingResult.data?.tax_rate || 0}
+        preselectedClientId={sp.clientId}
       />
     </div>
   )

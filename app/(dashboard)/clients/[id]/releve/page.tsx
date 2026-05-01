@@ -8,7 +8,9 @@ import ReleveFilter from '@/components/clients/ReleveFilter'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
-export default async function ClientReleve({ params, searchParams }: { params: { id: string }, searchParams: { from?: string, to?: string } }) {
+export default async function ClientReleve({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ from?: string, to?: string }> }) {
+  const { id } = await params
+  const sp = await searchParams
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -20,7 +22,7 @@ export default async function ClientReleve({ params, searchParams }: { params: {
   const { data: client } = await supabase
     .from('clients')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('pressing_id', userData?.pressing_id || '')
     .single()
 
@@ -32,8 +34,8 @@ export default async function ClientReleve({ params, searchParams }: { params: {
     .eq('id', userData!.pressing_id)
     .single()
 
-  const dateFrom = searchParams.from || ''
-  const dateTo = searchParams.to || ''
+  const dateFrom = sp.from || ''
+  const dateTo = sp.to || ''
 
   let ordersQuery = supabase
     .from('orders')

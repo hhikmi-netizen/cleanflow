@@ -197,6 +197,53 @@ export async function deleteDiscountRule(id: string) {
   revalidatePath('/pricing')
 }
 
+// ── Subscription renewal ──────────────────────────────────────────────────
+
+export async function renewSubscription(customerSubId: string) {
+  const { supabase, pressingId } = await getPressingId()
+
+  const { data: cs } = await supabase
+    .from('customer_subscriptions')
+    .select('*, subscriptions(duration_days, credits, price)')
+    .eq('id', customerSubId)
+    .eq('pressing_id', pressingId)
+    .single()
+
+  if (!cs) throw new Error('Abonnement introuvable')
+
+  const sub = cs.subscriptions as any
+  const today = new Date().toISOString().split('T')[0]
+  const d = new Date(today)
+  d.setDate(d.getDate() + (sub?.duration_days || 30))
+  const expiresAt = d.toISOString().split('T')[0]
+
+  const { error } = await supabase
+    .from('customer_subscriptions')
+    .update({
+      status: 'active',
+      started_at: today,
+      expires_at: expiresAt,
+      balance: sub?.credits || sub?.price || 0,
+      quota_used: 0,
+      kilo_used: 0,
+    })
+    .eq('id', customerSubId)
+    .eq('pressing_id', pressingId)
+
+  if (error) throw new Error(error.message)
+  revalidatePath('/pricing')
+  revalidatePath('/clients')
+}
+
+export async function toggleSubscription(id: string, active: boolean) {
+  const { supabase, pressingId } = await getPressingId()
+  const { error } = await supabase.from('subscriptions')
+    .update({ active })
+    .eq('id', id).eq('pressing_id', pressingId)
+  if (error) throw new Error(error.message)
+  revalidatePath('/pricing')
+}
+
 // ── Subscription usage on order ───────────────────────────────────────────
 
 export async function useSubscriptionOnOrder(payload: {

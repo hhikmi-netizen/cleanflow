@@ -14,7 +14,8 @@ import { formatCurrency, formatDate, formatDateTime, getPaymentLabel, buildWhats
 import Link from 'next/link'
 import { ChevronLeft, MapPin, Phone, MessageCircle, AlertTriangle, Truck, Package } from 'lucide-react'
 
-export default async function OrderDetailPage({ params }: { params: { id: string } }) {
+export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,7 +27,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const { data: order } = await supabase
     .from('orders')
     .select('*, clients(id, name, phone, email, address, client_type), order_items(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('pressing_id', userData?.pressing_id || '')
     .single()
 
@@ -43,7 +44,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   const isAdmin = userData2?.role === 'admin'
 
   const [{ data: payments }, { data: waSettings }] = await Promise.all([
-    supabase.from('payments').select('*').eq('order_id', params.id).order('created_at'),
+    supabase.from('payments').select('*').eq('order_id', id).order('created_at'),
     supabase.from('settings')
       .select('whatsapp_enabled, auto_notify_ready')
       .eq('pressing_id', userData!.pressing_id)

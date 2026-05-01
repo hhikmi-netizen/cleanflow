@@ -14,7 +14,8 @@ import {
   getResolutionLabel,
 } from '@/lib/utils'
 
-export default async function IncidentDetailPage({ params }: { params: { id: string } }) {
+export default async function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -27,7 +28,7 @@ export default async function IncidentDetailPage({ params }: { params: { id: str
   const { data: incident } = await supabase
     .from('incidents')
     .select('*, orders(id, order_number), clients(id, name, phone)')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('pressing_id', userData.pressing_id)
     .single()
 
@@ -36,7 +37,7 @@ export default async function IncidentDetailPage({ params }: { params: { id: str
   const { data: history } = await supabase
     .from('incident_history')
     .select('*')
-    .eq('incident_id', params.id)
+    .eq('incident_id', id)
     .order('created_at', { ascending: true })
 
   return (
@@ -47,7 +48,7 @@ export default async function IncidentDetailPage({ params }: { params: { id: str
             <ChevronLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Incident #{params.id.slice(0, 8).toUpperCase()}</h1>
+            <h1 className="text-lg font-bold text-gray-900">Incident #{id.slice(0, 8).toUpperCase()}</h1>
             <p className="text-xs text-gray-400">{formatDateTime(incident.created_at)}</p>
           </div>
         </div>
@@ -100,7 +101,7 @@ export default async function IncidentDetailPage({ params }: { params: { id: str
 
       {/* Actions + Journal */}
       <IncidentDetail
-        incidentId={params.id}
+        incidentId={id}
         currentStatus={incident.status}
         history={history || []}
       />

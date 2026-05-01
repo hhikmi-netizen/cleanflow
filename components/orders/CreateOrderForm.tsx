@@ -33,6 +33,7 @@ interface CreateOrderFormProps {
   services: Service[]
   pressingId: string
   taxRate: number
+  preselectedClientId?: string
 }
 
 // Normalize phone for search (strip spaces, dashes, dots)
@@ -40,10 +41,11 @@ function normalizePhone(s: string) {
   return s.replace(/[\s\-\.]/g, '')
 }
 
-export default function CreateOrderForm({ clients: initialClients, services, pressingId, taxRate }: CreateOrderFormProps) {
+export default function CreateOrderForm({ clients: initialClients, services, pressingId, taxRate, preselectedClientId }: CreateOrderFormProps) {
   const [clients, setClients] = useState<Client[]>(initialClients)
-  const [clientId, setClientId] = useState('')
-  const [clientSearch, setClientSearch] = useState('')
+  const preselected = preselectedClientId ? initialClients.find(c => c.id === preselectedClientId) : undefined
+  const [clientId, setClientId] = useState(preselected?.id || '')
+  const [clientSearch, setClientSearch] = useState(preselected?.name || '')
   const [showClientDropdown, setShowClientDropdown] = useState(false)
   const [items, setItems] = useState<OrderItem[]>([])
   const [serviceSearch, setServiceSearch] = useState('')
@@ -235,7 +237,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
 
   const filteredServices = services.filter(s =>
     s.name.toLowerCase().includes(serviceSearch.toLowerCase()) ||
-    s.category.toLowerCase().includes(serviceSearch.toLowerCase())
+    (s.category || '').toLowerCase().includes(serviceSearch.toLowerCase())
   )
 
   const selectClient = (client: Client) => {

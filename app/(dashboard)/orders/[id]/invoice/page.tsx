@@ -7,7 +7,8 @@ import PrintButton from '@/components/orders/PrintButton'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
-export default async function InvoicePage({ params }: { params: { id: string } }) {
+export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -22,7 +23,7 @@ export default async function InvoicePage({ params }: { params: { id: string } }
   const { data: order } = await supabase
     .from('orders')
     .select('*, clients(name, phone, email, address, client_type, ice), order_items(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('pressing_id', userData?.pressing_id || '')
     .single()
 

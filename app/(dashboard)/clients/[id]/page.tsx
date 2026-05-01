@@ -18,8 +18,10 @@ import {
   AlertTriangle, CreditCard, Package, TrendingUp, Clock, Star, FileText, History,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import ClientPaymentButton from '@/components/credit/ClientPaymentButton'
 
-export default async function ClientDetailPage({ params }: { params: { id: string } }) {
+export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,7 +33,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const { data: client } = await supabase
     .from('clients')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('pressing_id', userData?.pressing_id || '')
     .single()
 
@@ -83,12 +85,29 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     .limit(5)
 
   // Financial stats
+  const paymentsByOrder = (allPayments || []).reduce<Record<string, number>>((acc, p) => {
+    if (p.order_id) acc[p.order_id] = (acc[p.order_id] || 0) + Number(p.amount)
+    return acc
+  }, {})
+
   const totalPaid = (allPayments || []).reduce((s, p) => s + Number(p.amount), 0) +
     (orders || []).reduce((s, o) => s + Number(o.deposit || 0), 0)
   const totalDue = (orders || [])
     .filter(o => o.status !== 'cancelled')
     .reduce((s, o) => s + Number(o.total || 0), 0)
   const balance = totalDue - totalPaid
+
+  // Unpaid orders for payment button
+  const now = new Date()
+  const unpaidOrdersForPayment = (orders || [])
+    .filter(o => !o.paid && o.status !== 'cancelled')
+    .map(o => {
+      const paid = Number(o.deposit || 0) + (paymentsByOrder[o.id] || 0)
+      const due = Math.max(0, Number(o.total) - paid)
+      const daysOld = Math.floor((now.getTime() - new Date(o.created_at).getTime()) / (24 * 3600 * 1000))
+      return { id: o.id, total: Number(o.total), due, daysOld, createdAt: o.created_at }
+    })
+    .filter(o => o.due > 0)
 
   // Visit frequency
   const ordersChron = [...(orders || [])].reverse()
@@ -127,6 +146,17 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           </div>
         </div>
         <div className="flex gap-2">
+          <ClientPaymentButton
+            clientId={id}
+            clientName={client.name}
+            orders={unpaidOrdersForPayment}
+            totalDue={balance > 0 ? balance : 0}
+          />
+          <Link href={`/orders/new?clientId=${id}`}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">
+            <ShoppingBag size={14} />
+            <span className="hidden sm:inline">Commande</span>
+          </Link>
           <a href={`tel:${client.phone}`}
             className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors">
             <Phone size={16} />
@@ -304,7 +334,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                         <p className="text-xs text-blue-600">{formatCurrency(sub?.price || 0)}</p>
                       )}
                     </div>
-                    <Link href={`/clients/${params.id}/subscription/${cs.id}`}
+                    <Link href={`/clients/${id}/subscription/${cs.id}`}
                       className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition-colors"
                       title="Historique du forfait">
                       <History size={14} />

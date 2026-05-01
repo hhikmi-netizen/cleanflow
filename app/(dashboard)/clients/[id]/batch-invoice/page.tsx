@@ -8,7 +8,8 @@ import BatchInvoiceSelector from '@/components/clients/BatchInvoiceSelector'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
-export default async function BatchInvoicePage({ params }: { params: { id: string } }) {
+export default async function BatchInvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createServerClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -20,7 +21,7 @@ export default async function BatchInvoicePage({ params }: { params: { id: strin
   const { data: client } = await supabase
     .from('clients')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('pressing_id', userData?.pressing_id || '')
     .single()
 

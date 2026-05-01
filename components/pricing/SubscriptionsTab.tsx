@@ -4,12 +4,13 @@ import { useState, useTransition } from 'react'
 import { Subscription, CustomerSubscription } from '@/lib/types'
 
 type ClientMin = { id: string; name: string; phone: string }
-import { createSubscription, deleteSubscription, assignSubscription, updateCustomerSubStatus, updateCustomerSubBalance } from '@/app/actions/pricing'
+import { createSubscription, deleteSubscription, assignSubscription, updateCustomerSubStatus, updateCustomerSubBalance, renewSubscription } from '@/app/actions/pricing'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { Plus, Trash2, Loader2, UserPlus, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, Loader2, UserPlus, RefreshCw, History } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import Link from 'next/link'
 
 const SUB_TYPES = [
   { value: 'monthly',    label: 'Forfait mensuel' },
@@ -312,7 +313,7 @@ export default function SubscriptionsTab({ subscriptions, customerSubs, clients 
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
                         {sub?.sub_type === 'prepaid' && (
                           editBalanceId === cs.id ? (
                             <div className="flex items-center gap-1">
@@ -331,6 +332,29 @@ export default function SubscriptionsTab({ subscriptions, customerSubs, clients 
                               Éditer solde
                             </button>
                           )
+                        )}
+                        {/* Bouton renouveler */}
+                        <button
+                          onClick={() => startTransition(async () => {
+                            try {
+                              await renewSubscription(cs.id)
+                              toast.success('Forfait renouvelé')
+                            } catch (e: unknown) { toast.error((e as Error).message) }
+                          })}
+                          title="Renouveler"
+                          className="p-1.5 hover:bg-purple-50 rounded-lg text-gray-400 hover:text-purple-600 transition-colors"
+                        >
+                          <RefreshCw size={13} />
+                        </button>
+                        {/* Lien historique */}
+                        {cs.clients && (cs.clients as any).id && (
+                          <Link
+                            href={`/clients/${(cs.clients as any).id}/subscription/${cs.id}`}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                            title="Historique utilisation"
+                          >
+                            <History size={13} />
+                          </Link>
                         )}
                         <select value={cs.status}
                           onChange={e => startTransition(async () => {
