@@ -14,7 +14,7 @@ import {
 import Link from 'next/link'
 import {
   ChevronLeft, MapPin, Phone, MessageCircle, ShoppingBag,
-  AlertTriangle, CreditCard, Package, TrendingUp, Clock, Star,
+  AlertTriangle, CreditCard, Package, TrendingUp, Clock, Star, FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -326,9 +326,23 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Historique commandes</h3>
-          <Link href="/orders/new">
-            <Button size="sm" variant="outline">+ Commande</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {client.client_type === 'business' && (
+              <>
+                <Link href={`/clients/${client.id}/releve`}
+                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-1.5 rounded-lg transition-colors border border-gray-200">
+                  <FileText size={12} /> Relevé
+                </Link>
+                <Link href={`/clients/${client.id}/batch-invoice`}
+                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 hover:bg-blue-50 px-2 py-1.5 rounded-lg transition-colors border border-blue-200">
+                  <FileText size={12} /> Fact. groupée
+                </Link>
+              </>
+            )}
+            <Link href="/orders/new">
+              <Button size="sm" variant="outline">+ Commande</Button>
+            </Link>
+          </div>
         </div>
         {orders && orders.length > 0 ? (
           <div className="space-y-2">

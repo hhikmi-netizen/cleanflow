@@ -82,6 +82,11 @@ export default async function InvoicePage({ params }: { params: { id: string } }
             {order.pickup_date && (
               <p className="text-sm text-gray-500">Retrait prévu : {formatDate(order.pickup_date)}</p>
             )}
+            {(order as any).payment_terms && (order as any).payment_terms !== 'immediate' && (
+              <p className="text-xs text-gray-500 mt-0.5">
+                {{'net15':'Net 15 jours','net30':'Net 30 jours','net45':'Net 45 jours','net60':'Net 60 jours'}[(order as any).payment_terms as string]}
+              </p>
+            )}
             <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded font-medium ${
               order.paid ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
             }`}>

@@ -45,6 +45,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [serviceSearch, setServiceSearch] = useState('')
   const [showServiceDropdown, setShowServiceDropdown] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [paymentTerms, setPaymentTerms] = useState('immediate')
   const [deposit, setDeposit] = useState(0)
   const [depositDate, setDepositDate] = useState('')
   const [depositMode, setDepositMode] = useState<'on_site' | 'pickup'>('on_site')
@@ -309,6 +310,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           tax,
           total,
           payment_method: paymentMethod,
+          payment_terms: paymentTerms,
           deposit: deposit || 0,
           deposit_date: depositDate || null,
           deposit_mode: depositMode,
@@ -662,6 +664,22 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
               <option value="transfer">Virement</option>
             </select>
           </div>
+          {selectedClient?.client_type === 'business' && (
+            <div className="space-y-2">
+              <Label>Conditions de paiement</Label>
+              <select
+                value={paymentTerms}
+                onChange={e => setPaymentTerms(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="immediate">Paiement immédiat</option>
+                <option value="net15">Net 15 jours</option>
+                <option value="net30">Net 30 jours</option>
+                <option value="net45">Net 45 jours</option>
+                <option value="net60">Net 60 jours</option>
+              </select>
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Acompte versé (DH)</Label>
             <Input

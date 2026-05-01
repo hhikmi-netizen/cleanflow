@@ -24,6 +24,7 @@ export default function ClientForm({ pressingId, client, onSuccess }: ClientForm
   const [address, setAddress] = useState(client?.address || '')
   const [clientType, setClientType] = useState<'individual' | 'business'>(client?.client_type || 'individual')
   const [ice, setIce] = useState(client?.ice || '')
+  const [creditLimit, setCreditLimit] = useState(client?.credit_limit ? String(client.credit_limit) : '')
   const [notes, setNotes] = useState(client?.notes || '')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -39,6 +40,7 @@ export default function ClientForm({ pressingId, client, onSuccess }: ClientForm
       address: address || null,
       client_type: clientType,
       ice: ice || null,
+      credit_limit: creditLimit ? parseFloat(creditLimit) : null,
       notes: notes || null,
     }
 
@@ -108,10 +110,17 @@ export default function ClientForm({ pressingId, client, onSuccess }: ClientForm
           <Input id="address" value={address} onChange={e => setAddress(e.target.value)} className="h-11" placeholder="123 Rue Mohammed V, Casablanca" />
         </div>
         {clientType === 'business' && (
-          <div className="space-y-2">
-            <Label htmlFor="ice">ICE (N° entreprise)</Label>
-            <Input id="ice" value={ice} onChange={e => setIce(e.target.value)} className="h-11" placeholder="000000000000000" />
-          </div>
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="ice">ICE (N° entreprise)</Label>
+              <Input id="ice" value={ice} onChange={e => setIce(e.target.value)} className="h-11" placeholder="000000000000000" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="creditLimit">Plafond crédit (DH)</Label>
+              <Input id="creditLimit" type="number" min="0" step="0.01" value={creditLimit}
+                onChange={e => setCreditLimit(e.target.value)} className="h-11" placeholder="5000.00" />
+            </div>
+          </>
         )}
         <div className={`space-y-2 ${clientType === 'business' ? '' : 'sm:col-span-2'}`}>
           <Label htmlFor="notes">Notes</Label>

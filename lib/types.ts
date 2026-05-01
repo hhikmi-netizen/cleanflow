@@ -41,6 +41,7 @@ export interface Client {
   ice?: string
   notes?: string
   client_code?: string
+  credit_limit?: number | null
   total_orders: number
   total_spent: number
   created_at: string
@@ -94,6 +95,7 @@ export interface Order {
   assigned_to?: string | null
   delivery_status?: DeliveryStatus | null
   customer_sub_id?: string | null
+  payment_terms?: string | null
   created_at: string
   updated_at: string
   clients?: Pick<Client, 'id' | 'name' | 'phone' | 'address'>
