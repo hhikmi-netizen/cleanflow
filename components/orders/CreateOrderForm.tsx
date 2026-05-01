@@ -9,11 +9,12 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Loader2, Plus, Trash2, Search, UserPlus, X, Star, RefreshCw, MapPin, Clock } from 'lucide-react'
+import { Loader2, Plus, Trash2, Search, UserPlus, X, Star, RefreshCw, MapPin, Clock, Tag } from 'lucide-react'
 import { Client, Service } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
 import { adjustLoyaltyPoints } from '@/app/actions/loyalty'
 import { useSubscriptionOnOrder } from '@/app/actions/pricing'
+import { resolvePrice, ApplicablePriceRule, RULE_TYPE_LABELS, RULE_TYPE_COLORS, PriceContext } from '@/lib/priceEngine'
 
 interface OrderItem {
   service_id: string
@@ -22,6 +23,8 @@ interface OrderItem {
   unit_price: number
   subtotal: number
   notes: string
+  appliedRule?: string | null
+  appliedRuleType?: string | null
 }
 
 interface CreateOrderFormProps {
@@ -80,6 +83,9 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const [useSubBalance, setUseSubBalance] = useState(false)
   const [subBalanceAmount, setSubBalanceAmount] = useState(0)
 
+  // Price engine
+  const [priceRules, setPriceRules] = useState<ApplicablePriceRule[]>([])
+
   // Quick client creation
   const [showNewClientForm, setShowNewClientForm] = useState(false)
   const [newClientName, setNewClientName] = useState('')
@@ -92,10 +98,12 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   const router = useRouter()
   const supabase = createClient()
 
-  // Load available discount rules
+  // Load discount rules + price rules once
   useEffect(() => {
     supabase.from('discount_rules').select('id, name, discount_type, value').eq('active', true)
       .then(({ data }) => { if (data) setAvailableDiscounts(data) })
+    supabase.from('price_rules').select('*').eq('pressing_id', pressingId).eq('active', true)
+      .then(({ data }) => { if (data) setPriceRules(data as ApplicablePriceRule[]) })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load subscriptions when client changes
@@ -149,6 +157,38 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   }, [])
 
   const selectedClient = clients.find(c => c.id === clientId)
+
+  // Build context for the price engine (recomputed each render from current state)
+  const priceContext: PriceContext = {
+    clientType: selectedClient?.client_type === 'business' ? 'business' : 'individual',
+    depositMode,
+    deliveryMode,
+    isExpress: false,
+  }
+
+  // Recompute item prices whenever client type or deposit/delivery mode changes
+  useEffect(() => {
+    if (items.length === 0 || priceRules.length === 0) return
+    const ctx: PriceContext = {
+      clientType: selectedClient?.client_type === 'business' ? 'business' : 'individual',
+      depositMode,
+      deliveryMode,
+      isExpress: false,
+    }
+    let changed = false
+    const recomputed = items.map(item => {
+      const svc = services.find(s => s.id === item.service_id)
+      if (!svc) return item
+      const base = ctx.clientType === 'business' ? svc.price_business : svc.price_individual
+      const r = resolvePrice(item.service_id, base, priceRules, { ...ctx, quantity: item.quantity })
+      if (r.price !== item.unit_price || r.ruleName !== item.appliedRule) changed = true
+      return { ...item, unit_price: r.price, subtotal: item.quantity * r.price, appliedRule: r.ruleName, appliedRuleType: r.ruleType }
+    })
+    if (changed) {
+      setItems(recomputed)
+      toast.info('Prix recalculés', { duration: 2000 })
+    }
+  }, [clientId, depositMode, deliveryMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredClients = clients.filter(c => {
     if (!clientSearch) return true
@@ -212,25 +252,30 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
   }
 
   const addItem = (service: Service) => {
-    const price = selectedClient?.client_type === 'business'
+    const basePrice = selectedClient?.client_type === 'business'
       ? service.price_business
       : service.price_individual
 
     const existing = items.find(i => i.service_id === service.id)
     if (existing) {
+      const newQty = existing.quantity + 1
+      const r = resolvePrice(service.id, basePrice, priceRules, { ...priceContext, quantity: newQty })
       setItems(items.map(i =>
         i.service_id === service.id
-          ? { ...i, quantity: i.quantity + 1, subtotal: (i.quantity + 1) * i.unit_price }
+          ? { ...i, quantity: newQty, unit_price: r.price, subtotal: newQty * r.price, appliedRule: r.ruleName, appliedRuleType: r.ruleType }
           : i
       ))
     } else {
+      const r = resolvePrice(service.id, basePrice, priceRules, priceContext)
       setItems([...items, {
         service_id: service.id,
         service_name: service.name,
         quantity: 1,
-        unit_price: price,
-        subtotal: price,
+        unit_price: r.price,
+        subtotal: r.price,
         notes: '',
+        appliedRule: r.ruleName,
+        appliedRuleType: r.ruleType,
       }])
     }
     setServiceSearch('')
@@ -519,25 +564,35 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
           </div>
           {showServiceDropdown && serviceSearch && filteredServices.length > 0 && (
             <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {filteredServices.map(service => (
-                <button
-                  key={service.id}
-                  type="button"
-                  onMouseDown={e => { e.preventDefault(); addItem(service) }}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{service.name}</p>
-                    <p className="text-xs text-gray-400">{service.category}</p>
-                  </div>
-                  <div className="text-right flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-900">
-                      {formatCurrency(selectedClient?.client_type === 'business' ? service.price_business : service.price_individual)}
-                    </span>
-                    <Plus size={14} className="text-blue-600" />
-                  </div>
-                </button>
-              ))}
+              {filteredServices.map(service => {
+                const base = priceContext.clientType === 'business' ? service.price_business : service.price_individual
+                const r = resolvePrice(service.id, base, priceRules, priceContext)
+                return (
+                  <button
+                    key={service.id}
+                    type="button"
+                    onMouseDown={e => { e.preventDefault(); addItem(service) }}
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 flex justify-between items-center"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{service.name}</p>
+                      <p className="text-xs text-gray-400">{service.category}</p>
+                    </div>
+                    <div className="text-right flex items-center gap-2">
+                      {r.ruleType && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${RULE_TYPE_COLORS[r.ruleType] ?? 'bg-gray-100 text-gray-500'}`}>
+                          <Tag size={9} className="inline mr-0.5" />
+                          {RULE_TYPE_LABELS[r.ruleType] ?? r.ruleType}
+                        </span>
+                      )}
+                      <span className={`text-sm font-semibold ${r.ruleName ? 'text-blue-700' : 'text-gray-900'}`}>
+                        {formatCurrency(r.price)}
+                      </span>
+                      <Plus size={14} className="text-blue-600" />
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -548,7 +603,15 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
               <div key={item.service_id} className="p-3 bg-gray-50 rounded-lg space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.service_name}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-sm font-medium text-gray-900 truncate">{item.service_name}</p>
+                      {item.appliedRule && item.appliedRuleType && (
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${RULE_TYPE_COLORS[item.appliedRuleType] ?? 'bg-gray-100 text-gray-500'}`}>
+                          <Tag size={9} className="inline mr-0.5" />
+                          {item.appliedRule}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-400">{formatCurrency(item.unit_price)} / unité</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">

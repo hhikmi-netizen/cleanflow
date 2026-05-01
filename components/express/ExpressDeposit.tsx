@@ -7,14 +7,24 @@ import { formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import {
   Search, Phone, User, Plus, Minus, Trash2,
-  Loader2, CheckCircle, Zap, X,
+  Loader2, CheckCircle, Zap, X, Tag,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { resolvePrice, ApplicablePriceRule, RULE_TYPE_LABELS, RULE_TYPE_COLORS } from '@/lib/priceEngine'
 
 interface Client { id: string; name: string; phone: string; client_code?: string; client_type: string }
 interface Service { id: string; name: string; category: string; price_individual: number; price_business: number }
-interface CartItem { service_id: string; service_name: string; quantity: number; unit_price: number; textile_type?: string; notes?: string }
+interface CartItem {
+  service_id: string
+  service_name: string
+  quantity: number
+  unit_price: number
+  textile_type?: string
+  notes?: string
+  appliedRule?: string | null
+  appliedRuleType?: string | null
+}
 
 const TEXTILE_TYPES = ['Chemise', 'Pantalon', 'Costume', 'Robe', 'Veste', 'Manteau', 'Linge', 'Autre']
 
@@ -43,6 +53,9 @@ export default function ExpressDeposit({ services, pressingId, pressingName }: P
   const [showSvcDrop, setShowSvcDrop] = useState(false)
   const svcRef = useRef<HTMLDivElement>(null)
 
+  // Price engine
+  const [priceRules, setPriceRules] = useState<ApplicablePriceRule[]>([])
+
   // Order
   const [payLater, setPayLater] = useState(true)
   const [deposit, setDeposit] = useState(0)
@@ -51,6 +64,12 @@ export default function ExpressDeposit({ services, pressingId, pressingName }: P
 
   const router = useRouter()
   const supabase = createClient()
+
+  // Load price rules on mount
+  useEffect(() => {
+    supabase.from('price_rules').select('*').eq('pressing_id', pressingId).eq('active', true)
+      .then(({ data }) => { if (data) setPriceRules(data as ApplicablePriceRule[]) })
+  }, [pressingId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close service dropdown on outside click
   useEffect(() => {
@@ -94,11 +113,20 @@ export default function ExpressDeposit({ services, pressingId, pressingName }: P
   }
 
   const addToCart = (svc: Service) => {
-    const price = foundClient?.client_type === 'business' ? svc.price_business : svc.price_individual
+    const clientType = foundClient?.client_type === 'business' ? 'business' : 'individual' as const
+    const base = clientType === 'business' ? svc.price_business : svc.price_individual
     setCart(prev => {
       const existing = prev.find(i => i.service_id === svc.id)
-      if (existing) return prev.map(i => i.service_id === svc.id ? { ...i, quantity: i.quantity + 1 } : i)
-      return [...prev, { service_id: svc.id, service_name: svc.name, quantity: 1, unit_price: price }]
+      if (existing) {
+        const newQty = existing.quantity + 1
+        const r = resolvePrice(svc.id, base, priceRules, { clientType, isExpress: true, quantity: newQty })
+        return prev.map(i => i.service_id === svc.id
+          ? { ...i, quantity: newQty, unit_price: r.price, appliedRule: r.ruleName, appliedRuleType: r.ruleType }
+          : i
+        )
+      }
+      const r = resolvePrice(svc.id, base, priceRules, { clientType, isExpress: true })
+      return [...prev, { service_id: svc.id, service_name: svc.name, quantity: 1, unit_price: r.price, appliedRule: r.ruleName, appliedRuleType: r.ruleType }]
     })
     setServiceSearch('')
     setShowSvcDrop(false)
@@ -318,7 +346,15 @@ export default function ExpressDeposit({ services, pressingId, pressingName }: P
                 <div key={item.service_id} className="p-3 bg-gray-50 rounded-lg space-y-2">
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{item.service_name}</p>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-sm font-medium text-gray-900">{item.service_name}</p>
+                        {item.appliedRule && item.appliedRuleType && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${RULE_TYPE_COLORS[item.appliedRuleType] ?? 'bg-gray-100 text-gray-500'}`}>
+                            <Tag size={9} className="inline mr-0.5" />
+                            {item.appliedRule}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-400">{formatCurrency(item.unit_price)}</p>
                     </div>
                     <div className="flex items-center gap-2">
