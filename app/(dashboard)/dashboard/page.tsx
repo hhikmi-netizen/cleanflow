@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { createServerClient } from '@/lib/supabase/server'
 import StatCard from '@/components/shared/StatCard'
+import AlertsPanel from '@/components/dashboard/AlertsPanel'
 import { DollarSign, ShoppingBag, Users, Clock, TrendingUp } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
@@ -30,7 +31,10 @@ export default async function DashboardPage() {
   const todayStr = today.toISOString().split('T')[0]
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
 
-  const [ordersResult, clientsResult, recentOrdersResult] = await Promise.all([
+  const readyThreshold    = new Date(today.getTime() - 3 * 24 * 3600 * 1000).toISOString()
+  const processingThreshold = new Date(today.getTime() - 5 * 24 * 3600 * 1000).toISOString()
+
+  const [ordersResult, clientsResult, recentOrdersResult, readyOverdueRes, processingLateRes, unpaidRes] = await Promise.all([
     supabase
       .from('orders')
       .select('id, total, status, created_at')
@@ -45,6 +49,28 @@ export default async function DashboardPage() {
       .eq('pressing_id', pressingId)
       .order('created_at', { ascending: false })
       .limit(5),
+    // Orders stuck at 'ready' for > 3 days
+    supabase
+      .from('orders')
+      .select('id, order_number, created_at, total, deposit, clients(name, phone)')
+      .eq('pressing_id', pressingId)
+      .eq('status', 'ready')
+      .lte('created_at', readyThreshold),
+    // Orders stuck at 'in_progress' for > 5 days
+    supabase
+      .from('orders')
+      .select('id, order_number, created_at, total, deposit, clients(name, phone)')
+      .eq('pressing_id', pressingId)
+      .eq('status', 'in_progress')
+      .lte('created_at', processingThreshold),
+    // Unpaid orders this month
+    supabase
+      .from('orders')
+      .select('id, total, deposit')
+      .eq('pressing_id', pressingId)
+      .eq('paid', false)
+      .neq('status', 'cancelled')
+      .gte('created_at', monthStart),
   ])
 
   const orders = ordersResult.data || []
@@ -54,6 +80,25 @@ export default async function DashboardPage() {
   const revenueMonth = orders
     .filter(o => o.created_at >= monthStart)
     .reduce((sum, o) => sum + Number(o.total), 0)
+
+  const now = today.getTime()
+  const toAlertOrder = (o: any, status: string) => ({
+    id: o.id,
+    order_number: o.order_number,
+    created_at: o.created_at,
+    status,
+    total: Number(o.total),
+    deposit: Number(o.deposit || 0),
+    client_name: o.clients?.name || '—',
+    client_phone: o.clients?.phone || '',
+    days_ago: Math.floor((now - new Date(o.created_at).getTime()) / (24 * 3600 * 1000)),
+  })
+
+  const readyOverdue   = (readyOverdueRes.data || []).map(o => toAlertOrder(o, 'ready'))
+  const processingLate = (processingLateRes.data || []).map(o => toAlertOrder(o, 'in_progress'))
+  const unpaidOrders   = unpaidRes.data || []
+  const unpaidTotal    = unpaidOrders.reduce((s, o) => s + Math.max(0, Number(o.total) - Number(o.deposit || 0)), 0)
+  const unpaidCount    = unpaidOrders.length
 
   return (
     <div className="space-y-6">
@@ -95,6 +140,13 @@ export default async function DashboardPage() {
           color="purple"
         />
       </div>
+
+      <AlertsPanel
+        readyOverdue={readyOverdue}
+        processingLate={processingLate}
+        unpaidTotal={unpaidTotal}
+        unpaidCount={unpaidCount}
+      />
 
       <Card className="p-5">
         <div className="flex items-center justify-between mb-4">
