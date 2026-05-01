@@ -13,12 +13,30 @@ GitHub (master) ──push──▶ Vercel (auto-deploy) ──▶ https://clean
 
 Configurées dans Vercel → Settings → Environment Variables :
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique Supabase (anon) |
+| Variable | Requis | Description |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | URL du projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ | Clé publique Supabase (anon) |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Optionnel | Active la carte interactive dans Carte tournée |
+| `GOOGLE_MAPS_SERVER_API_KEY` | Optionnel | Usage futur (Geocoding server-side) |
 
-Ces deux variables suffisent. Le RLS gère la sécurité côté base de données.
+Les deux variables Supabase sont obligatoires. Le RLS gère la sécurité côté base de données.
+Sans `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`, la Carte tournée fonctionne en mode liste (toutes les actions restent disponibles).
+
+## Configurer Google Maps (optionnel)
+
+Pour activer la carte interactive dans la page **Carte tournée** :
+
+1. Aller sur [console.cloud.google.com](https://console.cloud.google.com)
+2. Créer un projet (ou sélectionner un existant)
+3. Activer les APIs : **Maps JavaScript API** + **Places API** (pour l'autocomplétion d'adresse)
+4. Dans **APIs & Services → Credentials**, créer une clé API
+5. Restreindre la clé (recommandé) : Referrers HTTP → `https://cleanflow-nu.vercel.app/*` + `http://localhost:3000/*`
+6. Dans Vercel → Project Settings → Environment Variables, ajouter :
+   - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` = la clé créée
+7. Redéployer (ou attendre le prochain push)
+
+⚠️ Ne jamais commiter la clé dans le code. Elle doit rester dans Vercel (ou `.env.local` en local).
 
 ## Déployer une nouvelle version
 

@@ -198,12 +198,13 @@ export async function seedDemoData(force = false): Promise<{ ok: boolean; messag
         { service: 'Couette simple', qty: 1, price: 95 },
       ]
     },
-    // Commande livraison en cours
+    // Commande livraison en cours (créée aujourd'hui pour apparaître dans la tournée)
     {
       client_id: cli('Khadija Amrani').id, status: 'ready', paid: false,
       total: 175, subtotal: 175, deposit: 50, tax: 0, deposit_mode: 'pickup', delivery_mode: 'delivery',
-      payment_method: 'cash', payment_terms: 'immediate', created_at: daysAgo(2),
+      payment_method: 'cash', payment_terms: 'immediate', created_at: daysAgo(0),
       delivery_status: 'pending',
+      pickup_address: '5 Bd Mohammed V, Casablanca',
       items: [
         { service: 'Couette double', qty: 1, price: 150 },
         { service: 'Parure de lit', qty: 1, price: 50 },
