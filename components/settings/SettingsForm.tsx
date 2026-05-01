@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { Loader2, MessageCircle, Star } from 'lucide-react'
+import { Loader2, MessageCircle, Star, FlaskConical } from 'lucide-react'
 import { Pressing, Settings } from '@/lib/types'
 import { useRouter } from 'next/navigation'
+import { seedDemoData } from '@/app/actions/seed-demo'
 
 interface SettingsFormProps {
   pressing: Pressing | null
@@ -42,8 +43,30 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
     points_redemption_min: settings?.points_redemption_min ?? 50,
   })
   const [loading, setLoading] = useState(false)
+  const [seeding, setSeeding] = useState(false)
+  const [showSeedConfirm, setShowSeedConfirm] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const handleSeedDemo = async (force = false) => {
+    setSeeding(true)
+    try {
+      const result = await seedDemoData(force)
+      if (!result.ok && result.message.includes('existent déjà')) {
+        setShowSeedConfirm(true)
+        return
+      }
+      if (!result.ok) {
+        toast.error(result.message)
+      } else {
+        toast.success(result.message)
+        setShowSeedConfirm(false)
+        router.refresh()
+      }
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -265,6 +288,51 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
       <Button type="submit" className="w-full h-11" disabled={loading}>
         {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sauvegarde...</> : 'Sauvegarder les paramètres'}
       </Button>
+
+      {/* Données démo */}
+      <Card className="p-5 border-dashed border-amber-200 bg-amber-50">
+        <div className="flex items-start gap-3">
+          <FlaskConical size={18} className="text-amber-600 shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-amber-900 text-sm">Données de démonstration</h3>
+            <p className="text-xs text-amber-700 mt-1">
+              Charge 8 clients, 17 services et 12 commandes marocaines réalistes pour une démo pressing en 10 minutes.
+            </p>
+            {showSeedConfirm ? (
+              <div className="mt-3 p-3 bg-white rounded-lg border border-amber-200 space-y-2">
+                <p className="text-xs font-medium text-red-700">Des données existent déjà. Écraser ?</p>
+                <p className="text-xs text-gray-500">Tous les clients, commandes et services actuels seront supprimés.</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSeedDemo(true)}
+                    disabled={seeding}
+                    className="flex-1 h-9 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {seeding ? <Loader2 size={14} className="animate-spin mx-auto" /> : 'Oui, écraser'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowSeedConfirm(false)}
+                    className="flex-1 h-9 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSeedDemo(false)}
+                disabled={seeding}
+                className="mt-3 h-9 px-4 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {seeding ? <><Loader2 size={14} className="animate-spin" /> Chargement...</> : 'Charger les données démo'}
+              </button>
+            )}
+          </div>
+        </div>
+      </Card>
     </form>
   )
 }

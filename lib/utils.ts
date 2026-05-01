@@ -70,7 +70,11 @@ export function buildGoogleMapsUrl(address: string): string {
 }
 
 export function buildWhatsAppUrl(phone: string, message: string): string {
-  const cleaned = phone.replace(/\D/g, '')
+  let cleaned = phone.replace(/\D/g, '')
+  // Normalize Moroccan local format (0XXXXXXXXX → 212XXXXXXXXX)
+  if (cleaned.startsWith('0') && cleaned.length === 10) {
+    cleaned = '212' + cleaned.slice(1)
+  }
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`
 }
 
