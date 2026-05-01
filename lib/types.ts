@@ -147,6 +147,9 @@ export interface Settings {
   whatsapp_enabled: boolean
   whatsapp_phone?: string
   auto_notify_ready: boolean
+  wa_notif_created: boolean
+  wa_notif_delivery: boolean
+  wa_notif_delivered: boolean
   invoice_footer?: string
   loyalty_enabled: boolean
   points_per_dh: number

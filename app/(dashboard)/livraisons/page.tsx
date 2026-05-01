@@ -17,7 +17,7 @@ export default async function LivraisonsPage() {
 
   const pid = userData.pressing_id
 
-  const [{ data: orders }, { data: teamMembers }] = await Promise.all([
+  const [{ data: orders }, { data: teamMembers }, { data: pressing }, { data: waSettings }] = await Promise.all([
     supabase
       .from('orders')
       .select('id, order_number, status, deposit_mode, delivery_mode, pickup_address, delivery_address, pickup_slot, delivery_slot, assigned_to, delivery_status, created_at, clients(id, name, phone, address)')
@@ -30,7 +30,16 @@ export default async function LivraisonsPage() {
       .select('id, full_name')
       .eq('pressing_id', pid)
       .order('full_name'),
+    supabase.from('pressings').select('name').eq('id', pid).single(),
+    supabase.from('settings').select('whatsapp_enabled, wa_notif_delivery, wa_notif_delivered').eq('pressing_id', pid).single(),
   ])
+
+  const waConfig = {
+    enabled: waSettings?.whatsapp_enabled ?? false,
+    pressingName: pressing?.name ?? '',
+    wa_notif_delivery: waSettings?.wa_notif_delivery ?? true,
+    wa_notif_delivered: waSettings?.wa_notif_delivered ?? true,
+  }
 
   return (
     <div className="space-y-5">
@@ -47,6 +56,7 @@ export default async function LivraisonsPage() {
       <DeliveryBoard
         orders={(orders || []) as any[]}
         teamMembers={teamMembers || []}
+        waConfig={waConfig}
       />
     </div>
   )

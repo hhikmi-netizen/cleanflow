@@ -4,7 +4,8 @@ import { useState, useTransition, useMemo } from 'react'
 import Link from 'next/link'
 import { updateDeliveryStatus, assignDriver } from '@/app/actions/deliveries'
 import { toast } from 'sonner'
-import { MapPin, Phone, Clock, User, Truck, ArrowRight, Package, ChevronDown, ChevronUp } from 'lucide-react'
+import { MapPin, Phone, Clock, User, Truck, ArrowRight, Package, ChevronDown, ChevronUp, MessageCircle } from 'lucide-react'
+import { getWhatsAppTemplates } from '@/lib/utils'
 
 type Mode = 'all' | 'pickup' | 'delivery'
 
@@ -59,15 +60,24 @@ interface DeliveryOrder {
   clients?: { id: string; name: string; phone: string; address?: string | null } | null
 }
 
+interface WaConfig {
+  enabled: boolean
+  pressingName: string
+  wa_notif_delivery: boolean
+  wa_notif_delivered: boolean
+}
+
 interface Props {
   orders: DeliveryOrder[]
   teamMembers: TeamMember[]
+  waConfig?: WaConfig
 }
 
-export default function DeliveryBoard({ orders, teamMembers }: Props) {
+export default function DeliveryBoard({ orders, teamMembers, waConfig }: Props) {
   const [mode, setMode] = useState<Mode>('all')
   const [isPending, startTransition] = useTransition()
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [pendingNotif, setPendingNotif] = useState<{ url: string; label: string } | null>(null)
 
   const filtered = useMemo(() => {
     if (mode === 'pickup')   return orders.filter(o => o.deposit_mode === 'pickup')
@@ -106,6 +116,25 @@ export default function DeliveryBoard({ orders, teamMembers }: Props) {
       try {
         await updateDeliveryStatus(order.id, next)
         toast.success(`Statut → ${DELIVERY_STATUS_LABELS[next]?.label}`)
+
+        // Show WhatsApp notification button if enabled
+        if (waConfig?.enabled && order.clients?.phone) {
+          const shouldNotify =
+            (next === 'en_route' && waConfig.wa_notif_delivery) ||
+            (next === 'delivered' && waConfig.wa_notif_delivered)
+          if (shouldNotify) {
+            const templates = getWhatsAppTemplates({
+              clientName: order.clients.name,
+              orderNumber: order.order_number,
+              pressingName: waConfig.pressingName,
+            })
+            const tpl = templates.find(t => t.id === (next === 'en_route' ? 'delivery' : 'delivered'))
+            if (tpl) {
+              const url = `https://wa.me/${order.clients.phone.replace(/\D/g, '')}?text=${encodeURIComponent(tpl.message)}`
+              setPendingNotif({ url, label: tpl.label })
+            }
+          }
+        }
       } catch (e: unknown) { toast.error((e as Error).message) }
     })
   }
@@ -123,6 +152,21 @@ export default function DeliveryBoard({ orders, teamMembers }: Props) {
     return (
       <div className="space-y-4">
         <FilterTabs mode={mode} setMode={setMode} pickupCount={pickupCount} deliveryCount={deliveryCount} total={orders.length} />
+        {pendingNotif && (
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+            <div className="flex items-center gap-2">
+              <MessageCircle size={16} className="text-green-600 shrink-0" />
+              <p className="text-sm text-green-800 font-medium">Notifier le client — {pendingNotif.label}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <a href={pendingNotif.url} target="_blank" rel="noopener noreferrer" onClick={() => setPendingNotif(null)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                <MessageCircle size={12} /> Envoyer
+              </a>
+              <button onClick={() => setPendingNotif(null)} className="text-xs text-green-600 hover:text-green-800 px-2 py-1.5">Ignorer</button>
+            </div>
+          </div>
+        )}
         <div className="text-center py-16 text-gray-400">
           <Truck size={40} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Aucune collecte ou livraison en cours</p>
@@ -134,6 +178,33 @@ export default function DeliveryBoard({ orders, teamMembers }: Props) {
   return (
     <div className="space-y-4">
       <FilterTabs mode={mode} setMode={setMode} pickupCount={pickupCount} deliveryCount={deliveryCount} total={orders.length} />
+
+      {/* WhatsApp notification prompt */}
+      {pendingNotif && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+          <div className="flex items-center gap-2">
+            <MessageCircle size={16} className="text-green-600 shrink-0" />
+            <p className="text-sm text-green-800 font-medium">Notifier le client — {pendingNotif.label}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={pendingNotif.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setPendingNotif(null)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <MessageCircle size={12} /> Envoyer
+            </a>
+            <button
+              onClick={() => setPendingNotif(null)}
+              className="text-xs text-green-600 hover:text-green-800 px-2 py-1.5"
+            >
+              Ignorer
+            </button>
+          </div>
+        </div>
+      )}
 
       {grouped.map(([dateLabel, dayOrders]) => (
         <div key={dateLabel}>

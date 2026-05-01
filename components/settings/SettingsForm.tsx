@@ -31,7 +31,10 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
   const [settingsData, setSettingsData] = useState({
     whatsapp_enabled: settings?.whatsapp_enabled || false,
     whatsapp_phone: settings?.whatsapp_phone || '',
-    auto_notify_ready: settings?.auto_notify_ready || true,
+    auto_notify_ready: settings?.auto_notify_ready ?? true,
+    wa_notif_created: settings?.wa_notif_created ?? false,
+    wa_notif_delivery: settings?.wa_notif_delivery ?? true,
+    wa_notif_delivered: settings?.wa_notif_delivered ?? true,
     invoice_footer: settings?.invoice_footer || 'Merci de votre confiance !',
     loyalty_enabled: settings?.loyalty_enabled ?? true,
     points_per_dh: settings?.points_per_dh ?? 1,
@@ -126,7 +129,6 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
         <div className="flex items-center gap-2 mb-4">
           <MessageCircle size={18} className="text-green-600" />
           <h3 className="font-semibold text-gray-900">Notifications WhatsApp</h3>
-          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full ml-1">Bientôt disponible</span>
         </div>
         <div className="space-y-4">
           <label className="flex items-center gap-3 cursor-pointer">
@@ -138,25 +140,54 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
             />
             <div>
               <p className="text-sm font-medium text-gray-900">Activer les notifications WhatsApp</p>
-              <p className="text-xs text-gray-400">Notifier automatiquement les clients quand leur commande est prête</p>
+              <p className="text-xs text-gray-400">Affiche des boutons de notification sur les fiches commande et le board livraisons</p>
             </div>
           </label>
+
           {settingsData.whatsapp_enabled && (
-            <div className="space-y-2">
-              <Label>Numéro WhatsApp Business</Label>
-              <Input
-                type="tel"
-                value={settingsData.whatsapp_phone}
-                onChange={e => setSettingsData({ ...settingsData, whatsapp_phone: e.target.value })}
-                placeholder="+212 6XX XXX XXX"
-                className="h-10"
-              />
+            <div className="space-y-4 pl-7">
+              <div className="space-y-2">
+                <Label>Numéro WhatsApp Business</Label>
+                <Input
+                  type="tel"
+                  value={settingsData.whatsapp_phone}
+                  onChange={e => setSettingsData({ ...settingsData, whatsapp_phone: e.target.value })}
+                  placeholder="+212 6XX XXX XXX"
+                  className="h-10"
+                />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Événements à notifier</p>
+                <div className="space-y-2.5">
+                  {([
+                    { key: 'wa_notif_created',   label: 'Commande enregistrée',    emoji: '📋', desc: 'Dès qu\'une commande est créée' },
+                    { key: 'auto_notify_ready',  label: 'Commande prête',           emoji: '✅', desc: 'Quand le statut passe à "Prêt"' },
+                    { key: 'wa_notif_delivery',  label: 'Livraison en route',        emoji: '🚚', desc: 'Quand le livreur part (statut En route)' },
+                    { key: 'wa_notif_delivered', label: 'Livraison effectuée',       emoji: '📦', desc: 'Quand la commande est livrée' },
+                  ] as { key: keyof typeof settingsData; label: string; emoji: string; desc: string }[]).map(({ key, label, emoji, desc }) => (
+                    <label key={key} className="flex items-start gap-3 cursor-pointer p-2.5 rounded-lg hover:bg-gray-50 border border-gray-100">
+                      <input
+                        type="checkbox"
+                        checked={!!settingsData[key]}
+                        onChange={e => setSettingsData({ ...settingsData, [key]: e.target.checked })}
+                        className="w-4 h-4 rounded text-green-600 mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{emoji} {label}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-green-50 rounded-lg text-xs text-green-700 space-y-1">
+                <p className="font-medium">Mode manuel (lien WhatsApp)</p>
+                <p>Un bouton &quot;Notifier via WhatsApp&quot; apparaît aux bons moments. Un clic ouvre WhatsApp avec le message pré-rédigé — vous n&apos;avez qu&apos;à envoyer.</p>
+              </div>
             </div>
           )}
-          <div className="p-3 bg-green-50 rounded-lg text-sm text-green-700">
-            <p className="font-medium mb-1">Comment ça marche :</p>
-            <p>Un bouton WhatsApp est disponible sur chaque fiche commande pour envoyer un message rapide au client. L&apos;intégration automatique (Twilio) sera disponible prochainement.</p>
-          </div>
         </div>
       </Card>
 
