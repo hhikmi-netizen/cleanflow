@@ -167,19 +167,24 @@ export default function SettingsForm({ pressing, settings, isAdmin }: SettingsFo
             </div>
           </label>
 
-          {settingsData.whatsapp_enabled && (
-            <div className="space-y-4 pl-7">
-              <div className="space-y-2">
-                <Label>Numéro WhatsApp Business</Label>
-                <Input
-                  type="tel"
-                  value={settingsData.whatsapp_phone}
-                  onChange={e => setSettingsData({ ...settingsData, whatsapp_phone: e.target.value })}
-                  placeholder="+212 6XX XXX XXX"
-                  className="h-10"
-                />
-              </div>
+          {/* Numéro WA Business — toujours visible, utilisé dans toute l'app */}
+          <div className="space-y-2">
+            <Label>Numéro WhatsApp Business du pressing</Label>
+            <Input
+              type="tel"
+              value={settingsData.whatsapp_phone}
+              onChange={e => setSettingsData({ ...settingsData, whatsapp_phone: e.target.value })}
+              placeholder="+212 6XX XXX XXX"
+              className="h-10"
+            />
+            <p className="text-xs text-gray-400">
+              Utilisé pour les boutons &ldquo;Contacter le pressing&rdquo; sur la page de suivi client.
+              Peut différer du téléphone général (ex : numéro WhatsApp Business dédié).
+            </p>
+          </div>
 
+          {settingsData.whatsapp_enabled && (
+            <div className="space-y-4 pl-0">
               <div>
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Événements à notifier</p>
                 <div className="space-y-2.5">

@@ -46,7 +46,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const [{ data: payments }, { data: waSettings }] = await Promise.all([
     supabase.from('payments').select('*').eq('order_id', id).order('created_at'),
     supabase.from('settings')
-      .select('whatsapp_enabled, auto_notify_ready')
+      .select('whatsapp_enabled, auto_notify_ready, whatsapp_phone')
       .eq('pressing_id', userData!.pressing_id)
       .single(),
   ])
@@ -205,7 +205,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           clientPhone={order.clients.phone}
           orderNumber={order.order_number}
           pressingName={pressing?.name || 'Pressing'}
-          pressingPhone={pressing?.phone}
+          pressingPhone={waSettings?.whatsapp_phone || pressing?.phone}
+          pressingAddress={pressing?.address}
           total={Number(order.total)}
           remaining={Math.max(0, Number(order.total) - Number(order.deposit))}
           trackingToken={order.tracking_token}

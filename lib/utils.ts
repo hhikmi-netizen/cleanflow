@@ -153,7 +153,8 @@ interface WaTemplateParams {
   clientName: string
   orderNumber: string
   pressingName: string
-  pressingPhone?: string
+  pressingPhone?: string      // numéro WA Business du pressing (affiché dans les messages)
+  pressingAddress?: string    // adresse du pressing (pour les messages de retrait)
   total?: number
   remaining?: number
   trackingUrl?: string
@@ -162,59 +163,79 @@ interface WaTemplateParams {
 
 export function getWhatsAppTemplates(params: WaTemplateParams) {
   const {
-    clientName, orderNumber, pressingName, pressingPhone,
+    clientName, orderNumber, pressingName, pressingPhone, pressingAddress,
     total, remaining, trackingUrl, pickupDate,
   } = params
 
-  const baseUrl = pressingPhone ? `https://wa.me/${pressingPhone.replace(/\D/g, '')}` : ''
-  const trackLine = trackingUrl ? `\nSuivi en ligne : ${trackingUrl}` : ''
-  const remainLine = remaining && remaining > 0 ? `\nReste à payer : ${remaining.toFixed(2)} DH` : ''
-  const pickupLine = pickupDate ? `\nRetrait prévu : ${pickupDate}` : ''
+  const trackLine = trackingUrl ? `\n🔗 Suivi : ${trackingUrl}` : ''
+  const remainLine = remaining && remaining > 0 ? `\n💳 Reste à payer : *${remaining.toFixed(2)} DH*` : ''
+  const pickupLine = pickupDate ? `\n📅 Retrait prévu : ${pickupDate}` : ''
 
-  const templates = [
+  // Bloc "Retrouvez-nous" inclus dans les messages de retrait
+  const locationBlock = [
+    pressingAddress ? `📍 ${pressingAddress}` : '',
+    pressingPhone   ? `📞 ${pressingPhone}` : '',
+  ].filter(Boolean).join('\n')
+  const locationLine = locationBlock ? `\n\n${locationBlock}` : ''
+
+  return [
     {
       id: 'created',
       label: 'Commande créée',
       emoji: '📋',
-      message: `Bonjour ${clientName} 👋\n\nVotre commande *${orderNumber}* a bien été enregistrée chez *${pressingName}*.\n${total ? `Montant total : ${total.toFixed(2)} DH` : ''}${remainLine}${pickupLine}${trackLine}\n\nMerci de votre confiance !`,
+      message:
+        `Bonjour ${clientName} 👋\n\n` +
+        `Votre commande *${orderNumber}* a bien été enregistrée chez *${pressingName}*.\n` +
+        `${total ? `💰 Montant total : *${total.toFixed(2)} DH*` : ''}${remainLine}${pickupLine}${trackLine}\n\n` +
+        `Merci de votre confiance ! 🙏`,
     },
     {
       id: 'in_progress',
       label: 'En traitement',
       emoji: '🔄',
-      message: `Bonjour ${clientName},\n\nVos articles (commande *${orderNumber}*) sont en cours de traitement chez *${pressingName}*.\nNous vous prévenons dès qu'ils sont prêts.${trackLine}`,
+      message:
+        `Bonjour ${clientName},\n\n` +
+        `Vos articles (commande *${orderNumber}*) sont en cours de traitement chez *${pressingName}*.\n` +
+        `Nous vous prévenons dès qu'ils sont prêts.${trackLine}`,
     },
     {
       id: 'ready',
       label: 'Commande prête',
       emoji: '✅',
-      message: `Bonjour ${clientName} 🎉\n\nVotre commande *${orderNumber}* est *prête* ! Vous pouvez venir la récupérer chez *${pressingName}*.${remainLine}${pickupLine}${trackLine}\n\nÀ bientôt !`,
+      message:
+        `Bonjour ${clientName} 🎉\n\n` +
+        `Votre commande *${orderNumber}* est *prête* !\n` +
+        `Venez la récupérer chez *${pressingName}*.${remainLine}${pickupLine}${locationLine}${trackLine}\n\n` +
+        `À bientôt ! 👋`,
     },
     {
       id: 'reminder',
       label: 'Rappel retrait',
       emoji: '⏰',
-      message: `Bonjour ${clientName},\n\nRappel : votre commande *${orderNumber}* vous attend chez *${pressingName}*.${remainLine}\n\nN'hésitez pas à nous contacter si vous avez besoin de reprogrammer.`,
+      message:
+        `Bonjour ${clientName},\n\n` +
+        `Rappel : votre commande *${orderNumber}* vous attend chez *${pressingName}*.${remainLine}${locationLine}\n\n` +
+        `N'hésitez pas à nous contacter si vous avez besoin de reprogrammer.`,
     },
     {
       id: 'delivery',
       label: 'Livraison en route',
       emoji: '🚚',
-      message: `Bonjour ${clientName},\n\nVotre commande *${orderNumber}* est en route ! Notre livreur arrive bientôt chez vous.${remainLine}\n\nCordialement, *${pressingName}*`,
+      message:
+        `Bonjour ${clientName},\n\n` +
+        `Votre commande *${orderNumber}* est en route ! Notre livreur arrive bientôt chez vous.${remainLine}\n\n` +
+        `Cordialement, *${pressingName}*`,
     },
     {
       id: 'delivered',
       label: 'Commande livrée',
       emoji: '📦',
-      message: `Bonjour ${clientName},\n\nVotre commande *${orderNumber}* a bien été livrée. Merci de votre confiance !\n\nÀ très bientôt chez *${pressingName}* 🙏`,
+      message:
+        `Bonjour ${clientName},\n\n` +
+        `Votre commande *${orderNumber}* a bien été livrée. Merci de votre confiance !\n\n` +
+        `À très bientôt chez *${pressingName}* 🙏`,
     },
   ]
-
-  return templates.map(t => ({
-    ...t,
-    url: `https://wa.me/${(pressingPhone || '').replace(/\D/g, '')}?text=` + encodeURIComponent(t.message),
-    clientUrl: buildWhatsAppUrl('', t.message), // will be overridden with real phone
-  }))
 }
 
 export function buildWhatsAppNotification(clientPhone: string, template: { message: string }) {

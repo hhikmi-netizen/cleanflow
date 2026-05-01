@@ -10,6 +10,7 @@ interface Props {
   orderNumber: string
   pressingName: string
   pressingPhone?: string
+  pressingAddress?: string
   total?: number
   remaining?: number
   trackingToken?: string
@@ -18,9 +19,9 @@ interface Props {
 
 export default function WhatsAppNotifications({
   clientName, clientPhone, orderNumber, pressingName,
-  pressingPhone, total, remaining, trackingToken, pickupDate,
+  pressingPhone, pressingAddress, total, remaining, trackingToken, pickupDate,
 }: Props) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
 
   const trackingUrl = trackingToken
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/track/${trackingToken}`
@@ -31,6 +32,7 @@ export default function WhatsAppNotifications({
     orderNumber,
     pressingName,
     pressingPhone,
+    pressingAddress,
     total,
     remaining,
     trackingUrl,
