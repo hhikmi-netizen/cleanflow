@@ -17,6 +17,7 @@ export default async function SettingsPage() {
     .single()
 
   if (!userData?.pressing_id) redirect('/onboarding')
+  if (userData.role !== 'admin') redirect('/dashboard')
 
   const [pressingResult, settingsResult] = await Promise.all([
     supabase.from('pressings').select('*').eq('id', userData.pressing_id).single(),

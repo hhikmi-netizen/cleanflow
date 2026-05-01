@@ -2,29 +2,40 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ShoppingBag, Users, Package, Settings, LogOut, AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet, Plus, MapPin } from 'lucide-react'
+import {
+  Home, ShoppingBag, Users, Package, Settings, LogOut,
+  AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet,
+  Plus, MapPin, ShieldAlert,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import ModeSwitch from '@/components/ui/ModeSwitch'
 
-const navItems = [
-  { href: '/dashboard',  label: 'Dashboard',   icon: Home },
-  { href: '/orders',     label: 'Commandes',    icon: ShoppingBag },
-  { href: '/express',    label: 'Dépôt express', icon: Zap },
-  { href: '/clients',    label: 'Clients',      icon: Users },
-  { href: '/services',   label: 'Catalogue',    icon: Package },
-  { href: '/incidents',  label: 'SAV',          icon: AlertTriangle },
-  { href: '/livraisons', label: 'Livraisons',   icon: Truck },
-  { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin },
-  { href: '/caisse',     label: 'Caisse',       icon: Wallet },
-  { href: '/stats',      label: 'Statistiques', icon: BarChart2 },
-  { href: '/pricing',    label: 'Tarification', icon: Tag },
-  { href: '/team',       label: 'Équipe',       icon: UserCog },
-  { href: '/settings',   label: 'Paramètres',   icon: Settings },
+const allNavItems = [
+  { href: '/dashboard',          label: 'Dashboard',     icon: Home,          adminOnly: false },
+  { href: '/orders',             label: 'Commandes',     icon: ShoppingBag,   adminOnly: false },
+  { href: '/express',            label: 'Dépôt express', icon: Zap,           adminOnly: false },
+  { href: '/clients',            label: 'Clients',       icon: Users,         adminOnly: false },
+  { href: '/services',           label: 'Catalogue',     icon: Package,       adminOnly: false },
+  { href: '/incidents',          label: 'SAV',           icon: AlertTriangle, adminOnly: false },
+  { href: '/livraisons',         label: 'Livraisons',    icon: Truck,         adminOnly: false },
+  { href: '/livraisons/tournee', label: 'Carte tournée', icon: MapPin,        adminOnly: false },
+  { href: '/caisse',             label: 'Caisse',        icon: Wallet,        adminOnly: false },
+  { href: '/stats',              label: 'Statistiques',  icon: BarChart2,     adminOnly: true  },
+  { href: '/pricing',            label: 'Tarification',  icon: Tag,           adminOnly: true  },
+  { href: '/team',               label: 'Équipe',        icon: UserCog,       adminOnly: true  },
+  { href: '/settings',           label: 'Paramètres',    icon: Settings,      adminOnly: true  },
 ]
 
-export default function Sidebar() {
+interface SidebarProps {
+  role?: 'admin' | 'employee'
+}
+
+export default function Sidebar({ role = 'employee' }: SidebarProps) {
+  const isAdmin = role === 'admin'
+  const navItems = allNavItems.filter(item => isAdmin || !item.adminOnly)
+
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -40,9 +51,17 @@ export default function Sidebar() {
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
       <div className="p-6 border-b border-gray-100">
         <h1 className="text-2xl font-bold text-blue-600">CleanFlow</h1>
-        <p className="text-xs text-gray-400 mt-1">Gestion de pressing</p>
+        {isAdmin ? (
+          <p className="text-xs text-gray-400 mt-1">Gestion de pressing</p>
+        ) : (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <ShieldAlert size={11} className="text-amber-500 shrink-0" />
+            <p className="text-xs text-amber-600 font-medium">Mode Employé</p>
+          </div>
+        )}
       </div>
-      <nav className="flex-1 px-3 py-4 space-y-1">
+
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = item.href === '/dashboard'
             ? pathname === '/dashboard'
@@ -64,8 +83,12 @@ export default function Sidebar() {
           )
         })}
       </nav>
+
       <div className="p-3 border-t border-gray-100 space-y-2">
-        <Link href="/orders/quick" className="flex items-center justify-center gap-2 w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
+        <Link
+          href="/orders/quick"
+          className="flex items-center justify-center gap-2 w-full h-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
+        >
           <Plus size={16} />
           Nouvelle commande
         </Link>

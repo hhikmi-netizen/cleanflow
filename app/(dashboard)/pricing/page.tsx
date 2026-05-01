@@ -13,6 +13,7 @@ export default async function PricingPage() {
   const { data: userData } = await supabase
     .from('users').select('pressing_id, role').eq('id', user.id).single()
   if (!userData?.pressing_id) redirect('/onboarding')
+  if (userData.role !== 'admin') redirect('/dashboard')
 
   const pid = userData.pressing_id
 
