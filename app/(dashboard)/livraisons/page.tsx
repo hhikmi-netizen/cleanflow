@@ -3,7 +3,8 @@ export const dynamic = 'force-dynamic'
 import { createServerClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DeliveryBoard from '@/components/livraisons/DeliveryBoard'
-import { Truck } from 'lucide-react'
+import { Truck, MapPin } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function LivraisonsPage() {
   const supabase = await createServerClient()
@@ -47,10 +48,16 @@ export default async function LivraisonsPage() {
         <div className="p-2 bg-blue-100 rounded-xl">
           <Truck size={20} className="text-blue-600" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-900">Collectes & Livraisons</h1>
           <p className="text-sm text-gray-500">Tournée du jour et planning</p>
         </div>
+        <Link
+          href="/livraisons/tournee"
+          className="flex items-center gap-2 h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
+        >
+          <MapPin size={15} /> Carte tournée
+        </Link>
       </div>
 
       <DeliveryBoard
