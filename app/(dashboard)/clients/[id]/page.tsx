@@ -7,6 +7,9 @@ import ClientEditSection from '@/components/clients/ClientEditSection'
 import LoyaltyWidget from '@/components/clients/LoyaltyWidget'
 import OrderStatusBadge from '@/components/orders/OrderStatusBadge'
 import MiniMap from '@/components/shared/MiniMap'
+import BillingDocumentGenerator from '@/components/billing/BillingDocumentGenerator'
+import BillingDocumentList from '@/components/billing/BillingDocumentList'
+import { getBillingDocuments } from '@/app/actions/billing'
 import {
   formatCurrency, formatDate,
   buildWhatsAppUrl,
@@ -28,7 +31,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   if (!user) redirect('/login')
 
   const { data: userData } = await supabase
-    .from('users').select('pressing_id').eq('id', user.id).single()
+    .from('users').select('pressing_id, role').eq('id', user.id).single()
 
   const { data: client } = await supabase
     .from('clients')
@@ -75,6 +78,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   ])
   const loyaltyTxs = loyaltyRes.data || []
   const loyaltySettings = settingsRes.data
+
+  // Billing documents
+  const billingDocs = await getBillingDocuments(id)
+  const isAdmin = userData?.role === 'admin'
 
   // Incidents for this client
   const { data: incidents } = await supabase
@@ -152,6 +159,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             orders={unpaidOrdersForPayment}
             totalDue={balance > 0 ? balance : 0}
           />
+          <BillingDocumentGenerator clientId={id} isAdmin={isAdmin} />
           <Link href={`/orders/new?clientId=${id}`}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">
             <ShoppingBag size={14} />
@@ -438,6 +446,19 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             <p className="text-sm text-gray-400">Aucune commande pour ce client</p>
           </div>
         )}
+      </Card>
+
+      {/* Facturation périodique */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-2">
+            <FileText size={14} /> Relevés &amp; Factures périodiques
+          </h3>
+          {billingDocs.length > 0 && (
+            <span className="text-xs text-gray-400">{billingDocs.length} document{billingDocs.length > 1 ? 's' : ''}</span>
+          )}
+        </div>
+        <BillingDocumentList docs={billingDocs} isAdmin={isAdmin} />
       </Card>
 
       {/* Incidents */}
