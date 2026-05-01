@@ -19,6 +19,21 @@ export function formatDateTime(date: string | Date): string {
   return format(new Date(date), 'dd/MM/yyyy à HH:mm', { locale: fr })
 }
 
+export function getOrderStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    pending: 'En attente',
+    in_progress: 'En traitement',
+    ready: 'Prêt à récupérer',
+    delivered: 'Livré',
+    cancelled: 'Annulé',
+  }
+  return labels[status] || status
+}
+
+export function getOrderStatusColor(status: string): string {
+  return getStatusColor(status)
+}
+
 export function getStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     pending: 'En attente',

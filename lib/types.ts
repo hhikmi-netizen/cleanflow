@@ -40,6 +40,7 @@ export interface Client {
   client_type: ClientType
   ice?: string
   notes?: string
+  client_code?: string
   total_orders: number
   total_spent: number
   created_at: string
@@ -64,6 +65,7 @@ export interface Order {
   pressing_id: string
   client_id?: string
   order_number: string
+  tracking_token?: string
   status: OrderStatus
   subtotal: number
   tax: number
@@ -93,6 +95,10 @@ export interface OrderItem {
   unit_price: number
   subtotal: number
   notes?: string
+  article_code?: string
+  color?: string
+  brand?: string
+  item_type?: string
   created_at: string
 }
 
