@@ -130,7 +130,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
 
   const handleCreateOrder = () => {
     if (cart.length === 0) { toast.error('Panier vide'); return }
-    if (!clientId) { toast.error('Selectionnez un client'); return }
+    if (!clientId) { toast.error('Sélectionnez un client'); return }
 
     startTransition(async () => {
       try {
@@ -157,7 +157,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
           delivered_at: new Date().toISOString(),
         }).select('id, order_number').single()
 
-        if (orderErr || !order) throw new Error(orderErr?.message || 'Erreur creation commande')
+        if (orderErr || !order) throw new Error(orderErr?.message || 'Erreur création commande')
 
         const items = cart.map(l => ({
           order_id: order.id,
@@ -186,7 +186,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
 
         setCreatedOrder(order)
         setShowSuccess(true)
-        toast.success('Commande creee !')
+        toast.success('Commande créée !')
       } catch (err: any) {
         toast.error(err.message || 'Erreur')
       }
@@ -205,7 +205,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
   }
 
   const whatsappMsg = createdOrder
-    ? `Bonjour${selectedClient ? ' ' + selectedClient.name : ''}, votre commande ${createdOrder.order_number} (${formatCurrency(total)}) est prete. Merci ! - ${pressingName}`
+    ? `Bonjour${selectedClient ? ' ' + selectedClient.name : ''}, votre commande ${createdOrder.order_number} (${formatCurrency(total)}) est prête. Merci ! - ${pressingName}`
     : ''
   const whatsappUrl = selectedClient?.phone
     ? `https://wa.me/${selectedClient.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(whatsappMsg)}`
@@ -418,7 +418,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
               {/* Payment method */}
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: 'cash', label: 'Especes', icon: Banknote },
+                  { value: 'cash', label: 'Espèces', icon: Banknote },
                   { value: 'card', label: 'Carte', icon: CreditCard },
                   { value: 'transfer', label: 'Virement', icon: ArrowRightLeft },
                 ].map(({ value, label, icon: Icon }) => (
@@ -441,8 +441,8 @@ export default function PosClient({ services, clients, pressingId, pressingName,
               {paymentMethod === 'cash' && (
                 <div>
                   <div className="flex justify-between items-center mb-2 text-sm">
-                    <span className="text-gray-500">Donne</span>
-                    <span className="font-bold text-lg">{givenAmount ? formatCurrency(parseFloat(givenAmount)) : 'â'}</span>
+                    <span className="text-gray-500">Donné</span>
+                    <span className="font-bold text-lg">{givenAmount ? formatCurrency(parseFloat(givenAmount)) : '—'}</span>
                   </div>
                   {given >= total && given > 0 && (
                     <div className="flex justify-between items-center mb-2 text-sm">
@@ -509,8 +509,8 @@ export default function PosClient({ services, clients, pressingId, pressingName,
               <Check className="w-10 h-10 text-green-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-green-800">Commande creee !</h2>
-              <p className="text-gray-500 mt-1">NÂ° {createdOrder.order_number}</p>
+              <h2 className="text-2xl font-bold text-green-800">Commande créée !</h2>
+              <p className="text-gray-500 mt-1">N° {createdOrder.order_number}</p>
               <p className="text-xl font-bold mt-2">{formatCurrency(total)}</p>
               {paymentMethod === 'cash' && change > 0 && (
                 <p className="text-green-600 font-medium">Rendu monnaie : {formatCurrency(change)}</p>
