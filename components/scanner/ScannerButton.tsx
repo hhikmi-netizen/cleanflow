@@ -26,9 +26,9 @@ export default function ScannerButton() {
         return
       }
 
-      toast.success(`Commande ${order.order_number} ouverte`)
+      toast.success(`Commande ${order.order_number} - Mode retrait`)
       setOpen(false)
-      router.push(`/orders/${order.id}`)
+      router.push(`/orders/pickup/${order.id}`)
     } catch {
       toast.error('Erreur lors de la recherche')
       setOpen(false)
