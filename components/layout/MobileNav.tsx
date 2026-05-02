@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { CleanFlowIcon, CleanFlowLogoFull } from '@/components/ui/CleanFlowLogo'
 
 const employeeNavItems = [
+  { href: '/pos',                label: 'Caisse tactile', icon: ScanLine   },
   { href: '/quick-sale',         label: 'Caisse rapide', icon: Monitor    },
   { href: '/orders',             label: 'Commandes',     icon: ShoppingBag },
   { href: '/clients',            label: 'Clients',       icon: Users      },
