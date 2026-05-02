@@ -16,15 +16,15 @@ const pageTitles: Record<string, string> = {
   '/clients': 'Clients',
   '/services': 'Catalogue',
   '/incidents': 'SAV',
-  '/express': 'Depot express',
+  '/express': 'DÃ©pÃ´t express',
   '/livraisons': 'Livraisons',
   '/caisse': 'Caisse',
   '/stats': 'Statistiques',
   '/exports': 'Exports CSV',
-  '/team': 'Equipe',
-  '/settings': 'Parametres',
+  '/team': 'Ãquipe',
+  '/settings': 'ParamÃ¨tres',
   '/onboarding': 'Configuration',
-  '/forbidden': 'Acces refuse',
+  '/forbidden': 'AccÃ¨s refusÃ©',
 }
 
 interface HeaderProps {
