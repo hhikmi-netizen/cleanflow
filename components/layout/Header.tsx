@@ -1,27 +1,30 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import MobileNav from './MobileNav'
 import GlobalSearch from './GlobalSearch'
 import ScannerButton from '@/components/scanner/ScannerButton'
+import { Clock } from 'lucide-react'
 
 const pageTitles: Record<string, string> = {
-  '/dashboard':  'Dashboard',
-  '/orders':     'Commandes',
+  '/dashboard': 'Dashboard',
+  '/orders': 'Commandes',
   '/orders/new': 'Nouvelle commande',
   '/quick-sale': 'Caisse rapide',
-  '/clients':    'Clients',
-  '/services':   'Catalogue',
-  '/incidents':  'SAV',
-  '/express':    'Depot express',
+  '/pos': 'Caisse tactile',
+  '/clients': 'Clients',
+  '/services': 'Catalogue',
+  '/incidents': 'SAV',
+  '/express': 'Depot express',
   '/livraisons': 'Livraisons',
-  '/caisse':     'Caisse',
-  '/stats':      'Statistiques',
-  '/exports':    'Exports CSV',
-  '/team':       'Equipe',
-  '/settings':   'Parametres',
+  '/caisse': 'Caisse',
+  '/stats': 'Statistiques',
+  '/exports': 'Exports CSV',
+  '/team': 'Equipe',
+  '/settings': 'Parametres',
   '/onboarding': 'Configuration',
-  '/forbidden':  'Acces refuse',
+  '/forbidden': 'Acces refuse',
 }
 
 interface HeaderProps {
@@ -30,6 +33,12 @@ interface HeaderProps {
 
 export default function Header({ role = 'employee' }: HeaderProps) {
   const pathname = usePathname()
+  const [now, setNow] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const title = Object.entries(pageTitles).find(([path]) =>
     pathname === path || (path !== '/' && pathname.startsWith(path))
@@ -44,7 +53,11 @@ export default function Header({ role = 'employee' }: HeaderProps) {
       <div className="flex-1">
         <GlobalSearch />
       </div>
-      <div className="shrink-0">
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5 text-gray-400 text-sm font-mono">
+          <Clock className="w-4 h-4" />
+          {now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+        </div>
         <ScannerButton />
       </div>
     </header>
