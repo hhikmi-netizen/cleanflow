@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Menu, X, Home, ShoppingBag, Users, Package, Settings, LogOut,
   AlertTriangle, Tag, Zap, BarChart2, UserCog, Truck, Wallet,
-  Monitor, Landmark, MapPin, Bell, ShieldAlert, Download,
+  Monitor, Landmark, MapPin, Bell, ShieldAlert, Download, ScanLine,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
