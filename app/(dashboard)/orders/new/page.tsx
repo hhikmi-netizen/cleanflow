@@ -24,7 +24,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
   const [clientsResult, servicesResult, pressingResult] = await Promise.all([
     supabase.from('clients').select('*').eq('pressing_id', userData.pressing_id).order('name'),
     supabase.from('services').select('*').eq('pressing_id', userData.pressing_id).eq('active', true).order('category').order('name'),
-    supabase.from('pressings').select('tax_rate').eq('id', userData.pressing_id).single(),
+    supabase.from('pressings').select('tax_rate, name').eq('id', userData.pressing_id).single(),
   ])
 
   return (
@@ -40,6 +40,7 @@ export default async function NewOrderPage({ searchParams }: { searchParams: Pro
         services={servicesResult.data || []}
         pressingId={userData.pressing_id}
         taxRate={pressingResult.data?.tax_rate || 0}
+        pressingName={pressingResult.data?.name || "Pressing"}
         preselectedClientId={sp.clientId}
       />
     </div>
