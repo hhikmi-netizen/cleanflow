@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import ModeSwitch from '@/components/ui/ModeSwitch'
+import { CleanFlowLogoFull } from '@/components/ui/CleanFlowLogo'
 
 // Items visibles par les admins ET les employés (Dashboard affiché aux deux)
 const employeeNavItems = [
@@ -60,12 +61,10 @@ export default function Sidebar({ role = 'employee' }: SidebarProps) {
 
   return (
     <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
-      <div className="p-6 border-b border-gray-100">
-        <h1 className="text-2xl font-bold text-blue-600">CleanFlow</h1>
-        {isAdmin ? (
-          <p className="text-xs text-gray-400 mt-1">Gestion de pressing</p>
-        ) : (
-          <div className="flex items-center gap-1.5 mt-1.5">
+      <div className="p-5 border-b border-gray-100">
+        <CleanFlowLogoFull size="sm" />
+        {!isAdmin && (
+          <div className="flex items-center gap-1.5 mt-2">
             <ShieldAlert size={11} className="text-amber-500 shrink-0" />
             <p className="text-xs text-amber-600 font-medium">Mode Employé</p>
           </div>

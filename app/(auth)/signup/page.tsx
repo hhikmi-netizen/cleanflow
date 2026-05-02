@@ -11,6 +11,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { Loader2, Mail, Users } from 'lucide-react'
 import { joinPressing } from '@/app/actions/onboarding'
+import { CleanFlowLogoFull } from '@/components/ui/CleanFlowLogo'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -117,8 +118,10 @@ export default function SignupPage() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center pb-2">
-        <div className="text-4xl font-bold text-blue-600 mb-2">CleanFlow</div>
-        <CardTitle className="text-xl text-gray-600 font-normal">
+        <div className="flex justify-center mb-3">
+          <CleanFlowLogoFull size="lg" />
+        </div>
+        <CardTitle className="text-base text-gray-500 font-normal">
           {isEmployee ? 'Rejoindre un pressing' : 'Créer votre pressing'}
         </CardTitle>
       </CardHeader>

@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { CleanFlowLogoFull } from '@/components/ui/CleanFlowLogo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -50,8 +51,10 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center pb-2">
-        <div className="text-4xl font-bold text-blue-600 mb-2">CleanFlow</div>
-        <CardTitle className="text-xl text-gray-600 font-normal">Connexion à votre espace</CardTitle>
+        <div className="flex justify-center mb-3">
+          <CleanFlowLogoFull size="lg" />
+        </div>
+        <CardTitle className="text-base text-gray-500 font-normal">Connexion à votre espace</CardTitle>
       </CardHeader>
       <CardContent>
         {/* Google */}

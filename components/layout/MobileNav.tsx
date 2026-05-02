@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { CleanFlowIcon, CleanFlowLogoFull } from '@/components/ui/CleanFlowLogo'
 
 const employeeNavItems = [
   { href: '/quick-sale',         label: 'Caisse rapide', icon: Monitor    },
@@ -57,8 +58,10 @@ export default function MobileNav({ role = 'employee' }: MobileNavProps) {
 
   return (
     <div className="md:hidden">
-      <button onClick={() => setOpen(true)} className="p-2 rounded-md text-gray-600 hover:bg-gray-100">
-        <Menu size={22} />
+      {/* Bouton hamburger avec icône logo */}
+      <button onClick={() => setOpen(true)} className="p-1.5 rounded-md text-gray-600 hover:bg-gray-100 flex items-center gap-1.5">
+        <CleanFlowIcon size={26} />
+        <Menu size={20} />
       </button>
 
       {open && (
@@ -67,9 +70,9 @@ export default function MobileNav({ role = 'employee' }: MobileNavProps) {
           <div className="absolute left-0 top-0 bottom-0 w-72 bg-white flex flex-col shadow-xl">
             <div className="flex items-center justify-between p-5 border-b">
               <div>
-                <span className="text-xl font-bold text-blue-600">CleanFlow</span>
+                <CleanFlowLogoFull size="sm" />
                 {!isAdmin && (
-                  <div className="flex items-center gap-1 mt-0.5">
+                  <div className="flex items-center gap-1 mt-1">
                     <ShieldAlert size={10} className="text-amber-500" />
                     <span className="text-xs text-amber-600 font-medium">Mode Employé</span>
                   </div>
