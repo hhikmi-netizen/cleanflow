@@ -105,7 +105,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           items={(order.order_items || []) as any[]}
           orderNumber={order.order_number}
           pressingName={pressing?.name || 'Pressing'}
-          trackingToken={order.tracking_token}
+          `trackingToken={order.tracking_token}
+                    clientName={order.clients?.name}
         />
         <div className="flex items-center gap-2">
           <Link href={`/orders/${order.id}/ticket`}
