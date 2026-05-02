@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import {
   ShoppingCart, Plus, Minus, Trash2, X, Banknote, CreditCard,
   ArrowRightLeft, Printer, MessageCircle, RotateCcw, Search,
-  Shirt, Droplets, Wind, Sparkles, Iron, Package, Clock,
+  Shirt, Droplets, Wind, Sparkles, Flame, Package, Clock,
   ArrowLeft, Check, User, Delete
 } from 'lucide-react'
 
@@ -43,7 +43,7 @@ interface Props {
 
 const CATEGORY_ICONS: Record<string, typeof Shirt> = {
   'Lavage': Droplets,
-  'Repassage': Iron,
+  'Repassage': Flame,
   'Nettoyage a sec': Wind,
   'Detachage': Sparkles,
   'Pressing': Shirt,
