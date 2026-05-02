@@ -846,6 +846,7 @@ export default function CreateOrderForm({ clients: initialClients, services, pre
             <Input
               type="number"
               min="0"
+              max={total}
               step="0.01"
               value={deposit || ''}
               onChange={e => setDeposit(parseFloat(e.target.value) || 0)}
