@@ -44,9 +44,14 @@ export default async function PickupPage({ params }: Props) {
   const totalPaid = (payments || []).reduce((sum, p) => sum + Number(p.amount), 0) + Number(order.deposit)
   const remaining = Math.max(0, Number(order.total) - totalPaid)
 
+  const fixedOrder = {
+    ...order,
+    client: Array.isArray(order.client) ? order.client[0] || null : order.client,
+  }
+
   return (
     <PickupClient
-      order={order}
+      order={fixedOrder as any}
       payments={payments || []}
       totalPaid={totalPaid}
       remaining={remaining}
