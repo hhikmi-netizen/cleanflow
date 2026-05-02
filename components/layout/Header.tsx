@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import MobileNav from './MobileNav'
 import GlobalSearch from './GlobalSearch'
+import ScannerButton from '@/components/scanner/ScannerButton'
 
 const pageTitles: Record<string, string> = {
   '/dashboard':  'Dashboard',
@@ -12,15 +13,15 @@ const pageTitles: Record<string, string> = {
   '/clients':    'Clients',
   '/services':   'Catalogue',
   '/incidents':  'SAV',
-  '/express':    'Dépôt express',
+  '/express':    'Depot express',
   '/livraisons': 'Livraisons',
   '/caisse':     'Caisse',
   '/stats':      'Statistiques',
   '/exports':    'Exports CSV',
-  '/team':       'Équipe',
-  '/settings':   'Paramètres',
+  '/team':       'Equipe',
+  '/settings':   'Parametres',
   '/onboarding': 'Configuration',
-  '/forbidden':  'Accès refusé',
+  '/forbidden':  'Acces refuse',
 }
 
 interface HeaderProps {
@@ -42,6 +43,9 @@ export default function Header({ role = 'employee' }: HeaderProps) {
       </div>
       <div className="flex-1">
         <GlobalSearch />
+      </div>
+      <div className="shrink-0">
+        <ScannerButton />
       </div>
     </header>
   )
