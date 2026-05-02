@@ -4,7 +4,7 @@
 -- ============================================================
 -- TABLE: pressings (entité business)
 -- ============================================================
-CREATE TABLE IF NOT EXISTS pressings (
+CREATE TABLE IF NOT EXISTS pressings (h
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   phone TEXT NOT NULL,
@@ -201,7 +201,9 @@ CREATE TABLE IF NOT EXISTS order_items (
   quantity INTEGER NOT NULL DEFAULT 1,
   unit_price DECIMAL(8,2) NOT NULL,
   subtotal DECIMAL(10,2) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+    "appliedRule" TEXT,
+    "appliedRuleType" TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
