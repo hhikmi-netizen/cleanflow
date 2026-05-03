@@ -229,9 +229,9 @@ export default function PosClient({ services, clients, pressingId, pressingName,
     : ''
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100 overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-50 overflow-hidden">
       {/* Top bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center shadow-sm gap-4 shrink-0 shadow-sm">
+      <div className="bg-white border-b border-gray-200/80 px-6 py-4 flex items-center shadow-[0_1px_3px_rgba(15,23,42,0.06)] gap-4 shrink-0 shadow-sm">
         <button onClick={() => router.push('/orders')} className="p-3 rounded-xl hover:bg-gray-100 active:scale-[0.96] transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -330,7 +330,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
 
           {/* Product grid */}
           <div className="flex-1 overflow-y-auto p-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
               {filteredServices.map(service => {
                 const Icon = getCategoryIcon(service.category)
                 const inCart = cart.find(l => l.serviceId === service.id)
@@ -338,10 +338,10 @@ export default function PosClient({ services, clients, pressingId, pressingName,
                   <button
                     key={service.id}
                     onClick={() => addToCart(service)}
-                    className={`relative flex flex-col items-center justify-center p-5 rounded-3xl border-2 transition-all duration-150 active:scale-[0.96] min-h-[120px] cursor-pointer select-none ${
+                    className={`relative flex flex-col items-center justify-center p-5 rounded-3xl border-2 transition-all duration-150 active:scale-[0.96] min-h-[140px] cursor-pointer select-none ${
                       inCart
                         ? `${getCategoryColor(service.category).border} ${getCategoryColor(service.category).bg} shadow-lg ${getCategoryColor(service.category).glow} ring-2 ring-offset-1 ${getCategoryColor(service.category).border.replace('border-','ring-')}`
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50/80'
+                        : 'border-gray-200 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05),0_4px_16px_rgba(15,23,42,0.04)] hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50/80'
                     }`}
                   >
                     {inCart && (
@@ -365,7 +365,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
         </div>
 
         {/* RIGHT: Cart + Payment (30%) */}
-        <div className="w-[30%] flex flex-col bg-white">
+        <div className="w-[30%] flex flex-col bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05),0_4px_16px_rgba(15,23,42,0.04)]">
           {/* Cart header */}
           <div className="px-5 py-4 border-b flex items-center justify-between shrink-0 bg-gray-50">
             <h2 className="font-extrabold text-lg flex items-center gap-2">
@@ -512,7 +512,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
               <button
                 onClick={handleCreateOrder}
                 disabled={isPending || cart.length === 0 || !clientId}
-                className="w-full py-6 rounded-2xl text-white font-black text-xl tracking-wide uppercase bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-green-800 shadow-lg shadow-green-200 active:scale-[0.97] transition-all duration-200-700 active:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg"
+                className="w-full py-6 rounded-2xl text-white font-black text-xl tracking-wide uppercase bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-green-800 shadow-[0_8px_24px_rgba(22,163,74,0.3)] active:scale-[0.97] transition-all duration-200-700 active:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg"
               >
                 {isPending ? (
                   <><RotateCcw className="w-5 h-5 animate-spin" /> Encaissement...</>
