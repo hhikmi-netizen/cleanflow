@@ -56,6 +56,10 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
   'Nettoyage a sec': { bg: 'bg-teal-50',    border: 'border-teal-400',   text: 'text-teal-700',    activeBg: 'bg-teal-600',   glow: 'shadow-teal-200' },
   'Detachage':       { bg: 'bg-purple-50',  border: 'border-purple-400', text: 'text-purple-700',  activeBg: 'bg-purple-600', glow: 'shadow-purple-200' },
   'Pressing':        { bg: 'bg-rose-50',    border: 'border-rose-400',   text: 'text-rose-700',    activeBg: 'bg-rose-600',   glow: 'shadow-rose-200' },
+  'Vetements':       { bg: 'bg-blue-50',    border: 'border-blue-400',   text: 'text-blue-700',    activeBg: 'bg-blue-600',   glow: 'shadow-blue-200' },
+  'Marocain':        { bg: 'bg-amber-50',   border: 'border-amber-400',  text: 'text-amber-700',   activeBg: 'bg-amber-600',  glow: 'shadow-amber-200' },
+  'Linge':           { bg: 'bg-violet-50',  border: 'border-violet-400', text: 'text-violet-700',  activeBg: 'bg-violet-600', glow: 'shadow-violet-200' },
+  'Kilo':            { bg: 'bg-emerald-50', border: 'border-emerald-400',text: 'text-emerald-700', activeBg: 'bg-emerald-600',glow: 'shadow-emerald-200' },
 }
 
 function getCategoryColor(cat: string) {
@@ -227,14 +231,14 @@ export default function PosClient({ services, clients, pressingId, pressingName,
   return (
     <div className="h-screen flex flex-col bg-gray-100 overflow-hidden">
       {/* Top bar */}
-      <div className="bg-white border-b px-6 py-3 flex items-center gap-4 shrink-0 shadow-sm">
-        <button onClick={() => router.push('/orders')} className="p-3 rounded-xl hover:bg-gray-100 active:scale-95 transition-all">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center shadow-sm gap-4 shrink-0 shadow-sm">
+        <button onClick={() => router.push('/orders')} className="p-3 rounded-xl hover:bg-gray-100 active:scale-[0.96] transition-all">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-extrabold tracking-tight">Caisse POS</h1>
         <button
               onClick={() => router.push('/orders/scan')}
-              className="ml-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold hover:bg-indigo-100 active:scale-95 transition-all"
+              className="ml-3 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-50 border-2 border-indigo-300 text-indigo-700 font-bold hover:bg-indigo-100 hover:border-indigo-400 hover:shadow-md active:scale-[0.96] transition-all duration-150"
             >
               <ScanLine className="w-5 h-5" />
               Scanner
@@ -297,7 +301,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-95 ${
+                  className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-[0.96] ${
                     selectedCategory === cat
                       ? `${getCategoryColor(cat).activeBg} text-white shadow-lg ${getCategoryColor(cat).glow}`
                       : `${getCategoryColor(cat).bg} ${getCategoryColor(cat).text} hover:shadow-md border border-transparent hover:${getCategoryColor(cat).border}`
@@ -334,10 +338,10 @@ export default function PosClient({ services, clients, pressingId, pressingName,
                   <button
                     key={service.id}
                     onClick={() => addToCart(service)}
-                    className={`relative flex flex-col items-center justify-center p-5 rounded-3xl border-2 transition-all duration-200 active:scale-[0.92] min-h-[130px] cursor-pointer select-none ${
+                    className={`relative flex flex-col items-center justify-center p-5 rounded-3xl border-2 transition-all duration-150 active:scale-[0.96] min-h-[120px] cursor-pointer select-none ${
                       inCart
                         ? `${getCategoryColor(service.category).border} ${getCategoryColor(service.category).bg} shadow-lg ${getCategoryColor(service.category).glow} ring-2 ring-offset-1 ${getCategoryColor(service.category).border.replace('border-','ring-')}`
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:-translate-y-0.5'
+                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50/80'
                     }`}
                   >
                     {inCart && (
@@ -475,7 +479,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
                       <button
                         key={key}
                         onClick={() => handleNumpad(key)}
-                        className={`py-4 rounded-2xl text-base font-extrabold transition-all duration-150 active:scale-90 shadow-sm hover:shadow-md ${
+                        className={`py-4 rounded-2xl text-base font-extrabold transition-all duration-150 active:scale-[0.94] shadow-sm hover:shadow-md ${
                           key === 'DEL' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300' :
                           key === 'C' ? 'bg-red-100 text-red-700 hover:bg-red-200 border border-red-300' :
                           'bg-white text-gray-900 hover:bg-gray-100 border border-gray-200'
@@ -489,14 +493,14 @@ export default function PosClient({ services, clients, pressingId, pressingName,
                       <button
                         key={amt}
                         onClick={() => setGivenAmount(String(amt))}
-                        className="py-3 rounded-2xl text-sm font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 active:scale-95 transition"
+                        className="py-3 rounded-2xl text-sm font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 active:scale-[0.96] transition"
                       >
                         {amt}
                       </button>
                     ))}
                     <button
                       onClick={() => setGivenAmount(String(total))}
-                      className="py-3 rounded-2xl text-sm font-bold bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 active:scale-95 transition"
+                      className="py-3 rounded-2xl text-sm font-bold bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 active:scale-[0.96] transition"
                     >
                       Exact
                     </button>
@@ -508,7 +512,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
               <button
                 onClick={handleCreateOrder}
                 disabled={isPending || cart.length === 0 || !clientId}
-                className="w-full py-5 rounded-2xl text-white font-extrabold text-lg bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 shadow-lg shadow-green-200 active:scale-[0.97] transition-all duration-200-700 active:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg"
+                className="w-full py-6 rounded-2xl text-white font-black text-xl tracking-wide uppercase bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-green-800 shadow-lg shadow-green-200 active:scale-[0.97] transition-all duration-200-700 active:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 shadow-lg"
               >
                 {isPending ? (
                   <><RotateCcw className="w-5 h-5 animate-spin" /> Encaissement...</>
