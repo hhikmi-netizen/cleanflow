@@ -9,7 +9,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2, X, Banknote, CreditCard,
   ArrowRightLeft, Printer, MessageCircle, RotateCcw, Search,
   Shirt, Droplets, Wind, Sparkles, Flame, Package, Clock,
-  ArrowLeft, Check, User, Delete
+  ArrowLeft, Check, User, Delete, ScanLine
 } from 'lucide-react'
 
 interface PosService {
@@ -232,7 +232,14 @@ export default function PosClient({ services, clients, pressingId, pressingName,
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-extrabold tracking-tight">Caisse POS</h1>
-        <div className="flex-1" />
+        <button
+              onClick={() => router.push('/orders/scan')}
+              className="ml-3 flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold hover:bg-indigo-100 active:scale-95 transition-all"
+            >
+              <ScanLine className="w-5 h-5" />
+              Scanner
+            </button>
+            <div className="flex-1" />
         {/* Client picker */}
         <div className="relative">
           {selectedClient ? (
@@ -506,7 +513,7 @@ export default function PosClient({ services, clients, pressingId, pressingName,
                 {isPending ? (
                   <><RotateCcw className="w-5 h-5 animate-spin" /> Encaissement...</>
                 ) : (
-                  <><Check className="w-5 h-5" /> Encaisser {formatCurrency(total)}</>
+                  <><Check className="w-5 h-5" /> ENCAISSER {formatCurrency(total)}</>
                 )}
               </button>
             </div>
